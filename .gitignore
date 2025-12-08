@@ -1,0 +1,31 @@
+# 构建输出
+build/
+*.tar.gz
+*.zip
+
+# 依赖目录
+resty/resty/
+resty/lib/
+resty/share/
+
+# 日志文件
+logs/*.log
+*.log
+
+# 临时文件
+*.tmp
+*.swp
+*~
+.DS_Store
+
+# IDE
+.vscode/
+.idea/
+*.iml
+
+# 证书文件（如果包含敏感信息）
+conf/cert/*.key
+conf/cert/*.crt
+
+# 配置文件（如果包含敏感信息）
+conf/apiok.yaml.local

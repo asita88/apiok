@@ -1,0 +1,7 @@
+#!/usr/bin/env resty
+
+package.path = "/usr/local/apiok/?.lua;" .. package.path
+
+require("apiok.cmd.utils.common")
+
+require("apiok.cmd.init")(arg)

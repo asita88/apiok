@@ -1,0 +1,38 @@
+# 存储引擎配置
+# 支持两种存储引擎: consul 或 mysql
+# 如果配置了 storage，则使用 storage.engine 指定的引擎
+# 如果未配置 storage，默认使用 mysql（如果配置了 mysql），否则使用 consul
+storage:
+  engine: mysql  # 可选值: consul 或 mysql，默认为 mysql
+
+# Consul 配置（当 storage.engine = consul 时使用）
+consul:
+  host: 127.0.0.1
+  port: 8500
+  connect_timeout: 600000
+  read_timeout: 600000
+  ssl: false
+  ssl_verify: true
+  sni_host: nil
+  prefix: apiok
+
+# MySQL 配置（当 storage.engine = mysql 时使用）
+mysql:
+  host: 172.27.128.1
+  port: 3306
+  database: apiok
+  user: root
+  password: "123456"
+  pool_size: 100
+  backlog: 100
+  timeout: 1000
+
+plugins:
+  - cors
+  - mock
+  - key-auth
+  - jwt-auth
+  - limit-req
+  - limit-conn
+  - limit-count
+
