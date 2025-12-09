@@ -386,12 +386,12 @@ local function generate_router_data(router_data)
                             path     = host_router_data.host .. ":" .. host_router_data.router.path,
                             method   = host_router_data.router.methods,
                             priority = priority_num,
-                            handler  = function(params, oak_ctx)
+                            handler  = function(params, ok_ctx)
 
-                                oak_ctx.matched.path = params
+                                ok_ctx.matched.path = params
 
-                                oak_ctx.config = {}
-                                oak_ctx.config.service_router = host_router_data
+                                ok_ctx.config = {}
+                                ok_ctx.config.service_router = host_router_data
                             end
                         })
                     until true
@@ -424,7 +424,7 @@ local function worker_event_router_handler_register()
             return
         end
 
-        local oak_router_data = {}
+        local ok_router_data = {}
 
         for i = 1, #data do
 
@@ -442,13 +442,13 @@ local function worker_event_router_handler_register()
                 end
 
                 for j = 1, #router_data do
-                    table.insert(oak_router_data, router_data[j])
+                    table.insert(ok_router_data, router_data[j])
                 end
 
             until true
         end
 
-        router_objects = oakrouting.new(oak_router_data)
+        router_objects = oakrouting.new(ok_router_data)
     end
 
     if ngx_process.type() ~= "privileged agent" then
@@ -464,7 +464,7 @@ function _M.init_worker()
 
 end
 
-function _M.parameter(oak_ctx)
+function _M.parameter(ok_ctx)
     local env = pdk.request.header(pdk.const.REQUEST_API_ENV_KEY)
     if env then
         env = pdk.string.upper(env)
@@ -472,21 +472,21 @@ function _M.parameter(oak_ctx)
         env = pdk.const.ENVIRONMENT_PROD
     end
 
-    oak_ctx.matched = {}
-    oak_ctx.matched.host   = ngx.var.host
-    oak_ctx.matched.uri    = ngx.var.uri
-    oak_ctx.matched.scheme = ngx.var.scheme
-    oak_ctx.matched.query  = pdk.request.query()
-    oak_ctx.matched.method = pdk.request.get_method()
-    oak_ctx.matched.header = pdk.request.header()
+    ok_ctx.matched = {}
+    ok_ctx.matched.host   = ngx.var.host
+    ok_ctx.matched.uri    = ngx.var.uri
+    ok_ctx.matched.scheme = ngx.var.scheme
+    ok_ctx.matched.query  = pdk.request.query()
+    ok_ctx.matched.method = pdk.request.get_method()
+    ok_ctx.matched.header = pdk.request.header()
 
-    oak_ctx.matched.header[pdk.const.REQUEST_API_ENV_KEY] = env
+    ok_ctx.matched.header[pdk.const.REQUEST_API_ENV_KEY] = env
 end
 
-function _M.router_match(oak_ctx)
+function _M.router_match(ok_ctx)
 
-    if not oak_ctx.matched or not oak_ctx.matched.host or not oak_ctx.matched.uri then
-        pdk.log.error("router_match: oak_ctx data format err: [" .. pdk.json.encode(oak_ctx, true) .. "]")
+    if not ok_ctx.matched or not ok_ctx.matched.host or not ok_ctx.matched.uri then
+        pdk.log.error("router_match: ok_ctx data format err: [" .. pdk.json.encode(ok_ctx, true) .. "]")
         return false
     end
 
@@ -495,9 +495,9 @@ function _M.router_match(oak_ctx)
         return false
     end
 
-    local match_path = oak_ctx.matched.host .. ":" .. oak_ctx.matched.uri
+    local match_path = ok_ctx.matched.host .. ":" .. ok_ctx.matched.uri
 
-    local match, err = router_objects:dispatch(match_path, string.upper(oak_ctx.matched.method), oak_ctx)
+    local match, err = router_objects:dispatch(match_path, string.upper(ok_ctx.matched.method), ok_ctx)
 
     if err then
         pdk.log.error("router_match: router_objects dispatch err: [" .. tostring(err) .. "]")
@@ -508,8 +508,8 @@ function _M.router_match(oak_ctx)
         return false
     end
 
-    local service_router = oak_ctx.config.service_router
-    local matched = oak_ctx.matched
+    local service_router = ok_ctx.config.service_router
+    local matched = ok_ctx.matched
 
     local match_protocols = false
 

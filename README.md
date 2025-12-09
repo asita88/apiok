@@ -180,7 +180,7 @@ function _M.schema_config(config)
     return nil
 end
 
-function _M.http_access(oak_ctx, plugin_config)
+function _M.http_access(ok_ctx, plugin_config)
     -- 插件逻辑
 end
 

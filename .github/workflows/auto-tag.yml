@@ -1,0 +1,41 @@
+name: Auto Tag
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  create-tag:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Get short commit SHA
+        id: commit
+        run: echo "sha=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+      
+      - name: Get date
+        id: date
+        run: echo "date=$(date +'%Y%m%d')" >> $GITHUB_OUTPUT
+      
+      - name: Create tag
+        id: tag
+        run: |
+          TAG_NAME="auto-${{ steps.date.outputs.date }}-${{ steps.commit.outputs.sha }}"
+          if git rev-parse "$TAG_NAME" >/dev/null 2>&1; then
+            echo "Tag $TAG_NAME already exists"
+            exit 0
+          fi
+          git tag "$TAG_NAME"
+          echo "tag=$TAG_NAME" >> $GITHUB_OUTPUT
+      
+      - name: Push tag
+        if: steps.tag.outputs.tag != ''
+        run: |
+          git push origin "${{ steps.tag.outputs.tag }}"
+

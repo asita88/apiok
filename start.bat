@@ -34,13 +34,6 @@ REM Check if container already exists
 docker ps -a --filter "name=%CONTAINER_NAME%" --format "{{.Names}}" | findstr /C:"%CONTAINER_NAME%" >nul
 if not errorlevel 1 (
     echo Container %CONTAINER_NAME% already exists.
-    echo.
-    choice /C YN /M "Do you want to stop and remove the existing container"
-    if errorlevel 2 (
-        echo Aborted.
-        pause
-        exit /b 0
-    )
     echo Stopping existing container...
     docker stop %CONTAINER_NAME% >nul 2>&1
     echo Removing existing container...

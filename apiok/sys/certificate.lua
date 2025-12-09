@@ -34,12 +34,12 @@ local function generate_ssl_data(ssl_data)
         path     = oakrouting_ssl_prefix .. ":" .. reverse_sni,
         method   = oakrouting_ssl_method,
         priority = #reverse_sni,
-        handler  = function(params, oak_ctx)
+        handler  = function(params, ok_ctx)
 
-            oak_ctx.params = params
+            ok_ctx.params = params
 
-            oak_ctx.config = {}
-            oak_ctx.config.cert_key = {
+            ok_ctx.config = {}
+            ok_ctx.config.cert_key = {
                 sni  = ssl_data.sni,
                 cert = ssl_data.cert,
                 key  = ssl_data.key,
@@ -64,7 +64,7 @@ local function worker_event_certificate_handler_register()
             return
         end
 
-        local oak_ssl_data = {}
+        local ok_ssl_data = {}
 
         for i = 1, #data do
 
@@ -77,12 +77,12 @@ local function worker_event_certificate_handler_register()
                     break
                 end
 
-                table.insert(oak_ssl_data, ssl_data)
+                table.insert(ok_ssl_data, ssl_data)
 
             until true
         end
 
-        ssl_objects = oakrouting.new(oak_ssl_data)
+        ssl_objects = oakrouting.new(ok_ssl_data)
 
     end
 
@@ -179,21 +179,21 @@ local function fetch_parsed_priv_key(sni, priv_key)
     return parsed, nil
 end
 
-function _M.ssl_match(oak_ctx)
+function _M.ssl_match(ok_ctx)
 
-    if not oak_ctx.matched or not oak_ctx.matched.host then
-        pdk.log.error("ssl_match: oak_ctx data format err: [" .. pdk.json.encode(oak_ctx, true) .. "]")
+    if not ok_ctx.matched or not ok_ctx.matched.host then
+        pdk.log.error("ssl_match: ok_ctx data format err: [" .. pdk.json.encode(ok_ctx, true) .. "]")
         return false
     end
 
-    local reverse_host = string.reverse(oak_ctx.matched.host)
+    local reverse_host = string.reverse(ok_ctx.matched.host)
     local match_sni = oakrouting_ssl_prefix .. ":" .. reverse_host
 
     if not ssl_objects then
         return false
     end
 
-    local match, err = ssl_objects:dispatch(match_sni, oakrouting_ssl_method, oak_ctx)
+    local match, err = ssl_objects:dispatch(match_sni, oakrouting_ssl_method, ok_ctx)
 
     if err then
         pdk.log.error("ssl_match: ssl_objects dispatch err: [" .. tostring(err) .. "]")
@@ -206,7 +206,7 @@ function _M.ssl_match(oak_ctx)
 
     ngx_ssl.clear_certs()
 
-    local parsed_cert, err = fetch_parsed_cert(oak_ctx.matched.host, oak_ctx.config.cert_key.cert)
+    local parsed_cert, err = fetch_parsed_cert(ok_ctx.matched.host, ok_ctx.config.cert_key.cert)
 
     if err ~= nil then
         pdk.log.error("failed to parse pem cert" ,err)
@@ -220,7 +220,7 @@ function _M.ssl_match(oak_ctx)
         return false
     end
 
-    local parsed_priv_key, err = fetch_parsed_priv_key(oak_ctx.matched.host, oak_ctx.config.cert_key.key)
+    local parsed_priv_key, err = fetch_parsed_priv_key(ok_ctx.matched.host, ok_ctx.config.cert_key.key)
 
     if err ~= nil then
         pdk.log.error("failed to parse pem priv key" ,err)

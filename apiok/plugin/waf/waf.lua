@@ -126,8 +126,8 @@ local function check_user_agent(user_agent, blocked_list)
     return false
 end
 
-local function check_request_data(oak_ctx, plugin_config)
-    local matched = oak_ctx.matched
+local function check_request_data(ok_ctx, plugin_config)
+    local matched = ok_ctx.matched
     
     local check_data = {}
     
@@ -197,7 +197,7 @@ local function check_request_data(oak_ctx, plugin_config)
     return false, nil
 end
 
-function _M.http_access(oak_ctx, plugin_config)
+function _M.http_access(ok_ctx, plugin_config)
     if not plugin_config.enabled then
         return
     end
@@ -213,7 +213,7 @@ function _M.http_access(oak_ctx, plugin_config)
         pdk.response.exit(403, { message = "Access denied" })
     end
     
-    local matched = oak_ctx.matched
+    local matched = ok_ctx.matched
     
     if plugin_config.allowed_methods and #plugin_config.allowed_methods > 0 then
         local method = ngx.req.get_method()
@@ -246,7 +246,7 @@ function _M.http_access(oak_ctx, plugin_config)
         end
     end
     
-    local blocked, reason = check_request_data(oak_ctx, plugin_config)
+    local blocked, reason = check_request_data(ok_ctx, plugin_config)
     if blocked then
         pdk.response.exit(403, { message = reason })
     end

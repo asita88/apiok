@@ -335,26 +335,26 @@ function _M.init_resolver()
     resolver_client = client
 end
 
-function _M.check_replenish_upstream(oak_ctx)
+function _M.check_replenish_upstream(ok_ctx)
 
-    if not oak_ctx.config or not oak_ctx.config.service_router or not oak_ctx.config.service_router.router then
-        pdk.log.error("check_replenish_upstream: oak_ctx data format error: ["
-                              .. pdk.json.encode(oak_ctx, true) .. "]")
+    if not ok_ctx.config or not ok_ctx.config.service_router or not ok_ctx.config.service_router.router then
+        pdk.log.error("check_replenish_upstream: ok_ctx data format error: ["
+                              .. pdk.json.encode(ok_ctx, true) .. "]")
         return
     end
 
-    local service_router = oak_ctx.config.service_router
+    local service_router = ok_ctx.config.service_router
 
     if service_router.router.upstream and service_router.router.upstream.id and
             upstream_objects[service_router.router.upstream.id] then
         return
     end
 
-    if not resolver_client or not oak_ctx.matched or not oak_ctx.matched.host or (#oak_ctx.matched.host == 0) then
+    if not resolver_client or not ok_ctx.matched or not ok_ctx.matched.host or (#ok_ctx.matched.host == 0) then
         return
     end
 
-    local address_cache_key = resolver_address_cache_prefix .. ":" .. oak_ctx.matched.host
+    local address_cache_key = resolver_address_cache_prefix .. ":" .. ok_ctx.matched.host
 
     local address_cache = cache.get(address_cache_key)
 
@@ -364,7 +364,7 @@ function _M.check_replenish_upstream(oak_ctx)
         return
     end
 
-    local answers, err = resolver_client:query(oak_ctx.matched.host, nil, {})
+    local answers, err = resolver_client:query(ok_ctx.matched.host, nil, {})
 
     if err then
         pdk.log.error("failed to query the DNS server: [" .. pdk.json.encode(err, true) .. "]")
@@ -394,16 +394,16 @@ function _M.check_replenish_upstream(oak_ctx)
 
 end
 
-function _M.gogogo(oak_ctx)
+function _M.gogogo(ok_ctx)
 
-    if not oak_ctx.config or not oak_ctx.config.service_router or not oak_ctx.config.service_router.router or
-            not oak_ctx.config.service_router.router.upstream or
-            not next(oak_ctx.config.service_router.router.upstream) then
-        pdk.log.error("[sys.balancer.gogogo] oak_ctx.config.service_router.router.upstream is null!")
+    if not ok_ctx.config or not ok_ctx.config.service_router or not ok_ctx.config.service_router.router or
+            not ok_ctx.config.service_router.router.upstream or
+            not next(ok_ctx.config.service_router.router.upstream) then
+        pdk.log.error("[sys.balancer.gogogo] ok_ctx.config.service_router.router.upstream is null!")
         return
     end
 
-    local upstream = oak_ctx.config.service_router.router.upstream
+    local upstream = ok_ctx.config.service_router.router.upstream
 
     local address, port
 
@@ -488,7 +488,7 @@ function _M.gogogo(oak_ctx)
                 if upstream_object.algorithm == pdk.const.BALANCER_ROUNDROBIN then
                     address_port = upstream_object.handler:find()
                 elseif upstream_object.algorithm == pdk.const.BALANCER_CHASH then
-                    address_port = upstream_object.handler:find(oak_ctx.config.service_router.host)
+                    address_port = upstream_object.handler:find(ok_ctx.config.service_router.host)
                 end
             end
 

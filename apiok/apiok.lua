@@ -3,12 +3,12 @@ local pairs  = pairs
 local pdk    = require("apiok.pdk")
 local sys    = require("apiok.sys")
 
-local function run_plugin(phase, oak_ctx)
-    if oak_ctx == nil or oak_ctx.config == nil then
+local function run_plugin(phase, ok_ctx)
+    if ok_ctx == nil or ok_ctx.config == nil then
         return
     end
 
-    local config = oak_ctx.config
+    local config = ok_ctx.config
 
     if not config then
         pdk.log.error("run_plugin plugin data not ready!")
@@ -41,7 +41,7 @@ local function run_plugin(phase, oak_ctx)
                     break
                 end
 
-                router_plugin_object.handler[phase](oak_ctx, router_plugin_object.config)
+                router_plugin_object.handler[phase](ok_ctx, router_plugin_object.config)
 
             until true
         end
@@ -68,7 +68,7 @@ local function run_plugin(phase, oak_ctx)
                     break
                 end
 
-                service_plugin_object.handler[phase](oak_ctx, service_plugin_object.config)
+                service_plugin_object.handler[phase](ok_ctx, service_plugin_object.config)
 
             until true
         end
@@ -138,12 +138,12 @@ function APIOK.ssl_certificate()
     local ngx_ssl = require("ngx.ssl")
     local server_name = ngx_ssl.server_name()
 
-    local oak_ctx = {
+    local ok_ctx = {
         matched = {
             host = server_name
         }
     }
-    sys.certificate.ssl_match(oak_ctx)
+    sys.certificate.ssl_match(ok_ctx)
 end
 
 function APIOK.http_access()
@@ -151,15 +151,15 @@ function APIOK.http_access()
     options_request_handle()
 
     local ngx_ctx = ngx.ctx
-    local oak_ctx = ngx_ctx.oak_ctx
-    if not oak_ctx then
-        oak_ctx = pdk.pool.fetch("oak_ctx", 0, 64)
-        ngx_ctx.oak_ctx = oak_ctx
+    local ok_ctx = ngx_ctx.ok_ctx
+    if not ok_ctx then
+        ok_ctx = pdk.pool.fetch("ok_ctx", 0, 64)
+        ngx_ctx.ok_ctx = ok_ctx
     end
 
-    sys.router.parameter(oak_ctx)
+    sys.router.parameter(ok_ctx)
 
-    local match_succeed = sys.router.router_match(oak_ctx)
+    local match_succeed = sys.router.router_match(ok_ctx)
 
     if not match_succeed then
         pdk.response.exit(404, { err_message = "\"URI\" Undefined" })
@@ -167,7 +167,7 @@ function APIOK.http_access()
 
     -- 动态设置 client_max_body_size
     -- 优先级：路由配置 > 服务配置 > 默认值（0 = 无限制）
-    local service_router = oak_ctx.config.service_router
+    local service_router = ok_ctx.config.service_router
     if service_router then
         local body_size = nil
         
@@ -225,8 +225,8 @@ function APIOK.http_access()
         
         -- 如果配置了 chunked_transfer_encoding，设置请求的 Transfer-Encoding
         if chunked_encoding ~= nil then
-            -- 保存到 oak_ctx 中，供 header_filter 阶段使用
-            oak_ctx.chunked_transfer_encoding = chunked_encoding
+            -- 保存到 ok_ctx 中，供 header_filter 阶段使用
+            ok_ctx.chunked_transfer_encoding = chunked_encoding
             
             if chunked_encoding then
                 -- 启用 chunked encoding：设置 Transfer-Encoding 头部
@@ -242,9 +242,9 @@ function APIOK.http_access()
 
     sys.balancer.init_resolver()
 
-    sys.balancer.check_replenish_upstream(oak_ctx)
+    sys.balancer.check_replenish_upstream(ok_ctx)
 
-    local matched  = oak_ctx.matched
+    local matched  = ok_ctx.matched
 
     local upstream_uri = matched.uri
 
@@ -259,7 +259,7 @@ function APIOK.http_access()
     -- 动态设置 proxy_set_header
     -- 优先级：路由配置 > 服务配置
     -- 合并路由和服务级别的配置（路由配置会覆盖服务配置）
-    local service_router = oak_ctx.config.service_router
+    local service_router = ok_ctx.config.service_router
     if service_router then
         local proxy_headers = {}
         
@@ -322,7 +322,7 @@ function APIOK.http_access()
     
     -- 动态设置 proxy_buffering
     -- 优先级：路由配置 > 服务配置 > 默认值（on）
-    local service_router = oak_ctx.config.service_router
+    local service_router = ok_ctx.config.service_router
     if service_router then
         local proxy_buffering = nil
         
@@ -398,20 +398,20 @@ function APIOK.http_access()
         end
     end
 
-    run_plugin("http_access", oak_ctx)
+    run_plugin("http_access", ok_ctx)
 end
 
 function APIOK.http_balancer()
-    local oak_ctx = ngx.ctx.oak_ctx
-    sys.balancer.gogogo(oak_ctx)
+    local ok_ctx = ngx.ctx.ok_ctx
+    sys.balancer.gogogo(ok_ctx)
 end
 
 function APIOK.http_header_filter()
-    local oak_ctx = ngx.ctx.oak_ctx
+    local ok_ctx = ngx.ctx.ok_ctx
     
     -- 动态设置 chunked_transfer_encoding（响应）
-    if oak_ctx and oak_ctx.chunked_transfer_encoding ~= nil then
-        local chunked_encoding = oak_ctx.chunked_transfer_encoding
+    if ok_ctx and ok_ctx.chunked_transfer_encoding ~= nil then
+        local chunked_encoding = ok_ctx.chunked_transfer_encoding
         
         if chunked_encoding then
             -- 启用 chunked encoding：设置 Transfer-Encoding 头部
@@ -425,19 +425,19 @@ function APIOK.http_header_filter()
         end
     end
     
-    run_plugin("http_header_filter", oak_ctx)
+    run_plugin("http_header_filter", ok_ctx)
 end
 
 function APIOK.http_body_filter()
-    local oak_ctx = ngx.ctx.oak_ctx
-    run_plugin("http_body_filter", oak_ctx)
+    local ok_ctx = ngx.ctx.ok_ctx
+    run_plugin("http_body_filter", ok_ctx)
 end
 
 function APIOK.http_log()
-    local oak_ctx = ngx.ctx.oak_ctx
-    run_plugin("http_log", oak_ctx)
-    if oak_ctx then
-        pdk.pool.release("oak_ctx", oak_ctx)
+    local ok_ctx = ngx.ctx.ok_ctx
+    run_plugin("http_log", ok_ctx)
+    if ok_ctx then
+        pdk.pool.release("ok_ctx", ok_ctx)
     end
 end
 

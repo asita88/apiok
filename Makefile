@@ -5,8 +5,8 @@ COPY             ?= cp -rf
 CHMOD            ?= chmod -R
 DOWNLOAD         ?= wget
 UNTAG            ?= tar -zxvf
-INST_OAK_PRODIR  ?= /usr/local/apiok
-INST_OAK_BINDIR  ?= /usr/bin
+INST_OK_PRODIR  ?= /usr/local/apiok
+INST_OK_BINDIR  ?= /usr/bin
 # OpenResty 相关变量
 OPENRESTY_VERSION ?= 1.21.4.1
 OPENRESTY_PREFIX ?= /usr/local/openresty
@@ -68,72 +68,72 @@ deps:
 
 .PHONY: install
 install:
-	$(INSTALL) -d $(INST_OAK_PRODIR)/apiok
-	$(INSTALL) -d $(INST_OAK_PRODIR)/apiok/admin
-	$(INSTALL) -d $(INST_OAK_PRODIR)/apiok/admin/dao
-	$(INSTALL) -d $(INST_OAK_PRODIR)/apiok/admin/schema
-	$(INSTALL) -d $(INST_OAK_PRODIR)/apiok/cmd
-	$(INSTALL) -d $(INST_OAK_PRODIR)/apiok/cmd/utils
-	$(INSTALL) -d $(INST_OAK_PRODIR)/apiok/pdk
-	$(INSTALL) -d $(INST_OAK_PRODIR)/apiok/plugin
-	$(INSTALL) -d $(INST_OAK_PRODIR)/apiok/plugin/cors
-	$(INSTALL) -d $(INST_OAK_PRODIR)/apiok/plugin/jwt-auth
-	$(INSTALL) -d $(INST_OAK_PRODIR)/apiok/plugin/key-auth
-	$(INSTALL) -d $(INST_OAK_PRODIR)/apiok/plugin/limit-conn
-	$(INSTALL) -d $(INST_OAK_PRODIR)/apiok/plugin/limit-count
-	$(INSTALL) -d $(INST_OAK_PRODIR)/apiok/plugin/limit-req
-	$(INSTALL) -d $(INST_OAK_PRODIR)/apiok/plugin/mock
-	$(INSTALL) -d $(INST_OAK_PRODIR)/apiok/sys
-	$(INSTALL) -d $(INST_OAK_PRODIR)/bin
-	$(INSTALL) -d $(INST_OAK_PRODIR)/conf
-	$(INSTALL) -d $(INST_OAK_PRODIR)/conf/cert
-	$(INSTALL) -d $(INST_OAK_PRODIR)/logs
-	$(INSTALL) -d $(INST_OAK_PRODIR)/resty
-	$(INSTALL) -d $(INST_OAK_PRODIR)/deps/share/lua/5.1
+	$(INSTALL) -d $(INST_OK_PRODIR)/apiok
+	$(INSTALL) -d $(INST_OK_PRODIR)/apiok/admin
+	$(INSTALL) -d $(INST_OK_PRODIR)/apiok/admin/dao
+	$(INSTALL) -d $(INST_OK_PRODIR)/apiok/admin/schema
+	$(INSTALL) -d $(INST_OK_PRODIR)/apiok/cmd
+	$(INSTALL) -d $(INST_OK_PRODIR)/apiok/cmd/utils
+	$(INSTALL) -d $(INST_OK_PRODIR)/apiok/pdk
+	$(INSTALL) -d $(INST_OK_PRODIR)/apiok/plugin
+	$(INSTALL) -d $(INST_OK_PRODIR)/apiok/plugin/cors
+	$(INSTALL) -d $(INST_OK_PRODIR)/apiok/plugin/jwt-auth
+	$(INSTALL) -d $(INST_OK_PRODIR)/apiok/plugin/key-auth
+	$(INSTALL) -d $(INST_OK_PRODIR)/apiok/plugin/limit-conn
+	$(INSTALL) -d $(INST_OK_PRODIR)/apiok/plugin/limit-count
+	$(INSTALL) -d $(INST_OK_PRODIR)/apiok/plugin/limit-req
+	$(INSTALL) -d $(INST_OK_PRODIR)/apiok/plugin/mock
+	$(INSTALL) -d $(INST_OK_PRODIR)/apiok/sys
+	$(INSTALL) -d $(INST_OK_PRODIR)/bin
+	$(INSTALL) -d $(INST_OK_PRODIR)/conf
+	$(INSTALL) -d $(INST_OK_PRODIR)/conf/cert
+	$(INSTALL) -d $(INST_OK_PRODIR)/logs
+	$(INSTALL) -d $(INST_OK_PRODIR)/resty
+	$(INSTALL) -d $(INST_OK_PRODIR)/deps/share/lua/5.1
 
-	$(INSTALL) apiok/*.lua        			   $(INST_OAK_PRODIR)/apiok/
-	$(INSTALL) apiok/admin/*.lua  			   $(INST_OAK_PRODIR)/apiok/admin/
-	$(INSTALL) apiok/admin/dao/*.lua 		   $(INST_OAK_PRODIR)/apiok/admin/dao/
-	$(INSTALL) apiok/admin/schema/*.lua 	   $(INST_OAK_PRODIR)/apiok/admin/schema/
-	$(INSTALL) apiok/cmd/*.lua 			   $(INST_OAK_PRODIR)/apiok/cmd/
-	$(INSTALL) apiok/cmd/utils/*.lua 		   $(INST_OAK_PRODIR)/apiok/cmd/utils/
-	$(INSTALL) apiok/pdk/*.lua    			   $(INST_OAK_PRODIR)/apiok/pdk/
-	$(INSTALL) apiok/plugin/*.lua 			   $(INST_OAK_PRODIR)/apiok/plugin/
-	$(INSTALL) apiok/plugin/cors/*.lua 	   $(INST_OAK_PRODIR)/apiok/plugin/cors/
-	$(INSTALL) apiok/plugin/jwt-auth/*.lua    $(INST_OAK_PRODIR)/apiok/plugin/jwt-auth/
-	$(INSTALL) apiok/plugin/key-auth/*.lua    $(INST_OAK_PRODIR)/apiok/plugin/key-auth/
-	$(INSTALL) apiok/plugin/limit-conn/*.lua  $(INST_OAK_PRODIR)/apiok/plugin/limit-conn/
-	$(INSTALL) apiok/plugin/limit-count/*.lua $(INST_OAK_PRODIR)/apiok/plugin/limit-count/
-	$(INSTALL) apiok/plugin/limit-req/*.lua   $(INST_OAK_PRODIR)/apiok/plugin/limit-req/
-	$(INSTALL) apiok/plugin/mock/*.lua 	   $(INST_OAK_PRODIR)/apiok/plugin/mock/
-	$(INSTALL) apiok/sys/*.lua    			   $(INST_OAK_PRODIR)/apiok/sys/
+	$(INSTALL) apiok/*.lua        			   $(INST_OK_PRODIR)/apiok/
+	$(INSTALL) apiok/admin/*.lua  			   $(INST_OK_PRODIR)/apiok/admin/
+	$(INSTALL) apiok/admin/dao/*.lua 		   $(INST_OK_PRODIR)/apiok/admin/dao/
+	$(INSTALL) apiok/admin/schema/*.lua 	   $(INST_OK_PRODIR)/apiok/admin/schema/
+	$(INSTALL) apiok/cmd/*.lua 			   $(INST_OK_PRODIR)/apiok/cmd/
+	$(INSTALL) apiok/cmd/utils/*.lua 		   $(INST_OK_PRODIR)/apiok/cmd/utils/
+	$(INSTALL) apiok/pdk/*.lua    			   $(INST_OK_PRODIR)/apiok/pdk/
+	$(INSTALL) apiok/plugin/*.lua 			   $(INST_OK_PRODIR)/apiok/plugin/
+	$(INSTALL) apiok/plugin/cors/*.lua 	   $(INST_OK_PRODIR)/apiok/plugin/cors/
+	$(INSTALL) apiok/plugin/jwt-auth/*.lua    $(INST_OK_PRODIR)/apiok/plugin/jwt-auth/
+	$(INSTALL) apiok/plugin/key-auth/*.lua    $(INST_OK_PRODIR)/apiok/plugin/key-auth/
+	$(INSTALL) apiok/plugin/limit-conn/*.lua  $(INST_OK_PRODIR)/apiok/plugin/limit-conn/
+	$(INSTALL) apiok/plugin/limit-count/*.lua $(INST_OK_PRODIR)/apiok/plugin/limit-count/
+	$(INSTALL) apiok/plugin/limit-req/*.lua   $(INST_OK_PRODIR)/apiok/plugin/limit-req/
+	$(INSTALL) apiok/plugin/mock/*.lua 	   $(INST_OK_PRODIR)/apiok/plugin/mock/
+	$(INSTALL) apiok/sys/*.lua    			   $(INST_OK_PRODIR)/apiok/sys/
 
-	$(INSTALL) bin/apiok $(INST_OAK_PRODIR)/bin/apiok
+	$(INSTALL) bin/apiok $(INST_OK_PRODIR)/bin/apiok
 ifndef SKIP_SYSTEM_BIN
-	$(INSTALL) bin/apiok $(INST_OAK_BINDIR)/apiok
+	$(INSTALL) bin/apiok $(INST_OK_BINDIR)/apiok
 endif
 
-	$(INSTALL) conf/mime.types  $(INST_OAK_PRODIR)/conf/mime.types
-	$(INSTALL) conf/apiok.yaml $(INST_OAK_PRODIR)/conf/apiok.yaml
-	$(INSTALL) conf/nginx.conf  $(INST_OAK_PRODIR)/conf/nginx.conf
+	$(INSTALL) conf/mime.types  $(INST_OK_PRODIR)/conf/mime.types
+	$(INSTALL) conf/apiok.yaml $(INST_OK_PRODIR)/conf/apiok.yaml
+	$(INSTALL) conf/nginx.conf  $(INST_OK_PRODIR)/conf/nginx.conf
 
-	$(INSTALL) conf/cert/apiok.crt $(INST_OAK_PRODIR)/conf/cert/apiok.crt
-	$(INSTALL) conf/cert/apiok.key $(INST_OAK_PRODIR)/conf/cert/apiok.key
+	$(INSTALL) conf/cert/apiok.crt $(INST_OK_PRODIR)/conf/cert/apiok.crt
+	$(INSTALL) conf/cert/apiok.key $(INST_OK_PRODIR)/conf/cert/apiok.key
 
-	# $(INSTALL) README.md    $(INST_OAK_PRODIR)/README.md
-	# $(INSTALL) README_CN.md $(INST_OAK_PRODIR)/README_CN.md
-	# $(INSTALL) COPYRIGHT    $(INST_OAK_PRODIR)/COPYRIGHT
-	# $(INSTALL) LICENSE      $(INST_OAK_PRODIR)/LICENSE
-	$(COPY) resty/*       	$(INST_OAK_PRODIR)/resty/ 2>/dev/null || true
+	# $(INSTALL) README.md    $(INST_OK_PRODIR)/README.md
+	# $(INSTALL) README_CN.md $(INST_OK_PRODIR)/README_CN.md
+	# $(INSTALL) COPYRIGHT    $(INST_OK_PRODIR)/COPYRIGHT
+	# $(INSTALL) LICENSE      $(INST_OK_PRODIR)/LICENSE
+	$(COPY) resty/*       	$(INST_OK_PRODIR)/resty/ 2>/dev/null || true
 	# 安装 Penlight 到 deps/share/lua/5.1/pl/ 目录（nginx.conf 中的 lua_package_path 需要）
-	$(COPY) resty/pl      	$(INST_OAK_PRODIR)/deps/share/lua/5.1/pl 2>/dev/null || true
-	$(COPY) sql           	$(INST_OAK_PRODIR)/sql/ 2>/dev/null || true
-	$(COPY) doc           	$(INST_OAK_PRODIR)/doc/ 2>/dev/null || true
+	$(COPY) resty/pl      	$(INST_OK_PRODIR)/deps/share/lua/5.1/pl 2>/dev/null || true
+	$(COPY) sql           	$(INST_OK_PRODIR)/sql/ 2>/dev/null || true
+	$(COPY) doc           	$(INST_OK_PRODIR)/doc/ 2>/dev/null || true
 
 .PHONY: uninstall
 uninstall:
-	$(REMOVE) $(INST_OAK_PRODIR)
-	$(REMOVE) $(INST_OAK_BINDIR)/apiok
+	$(REMOVE) $(INST_OK_PRODIR)
+	$(REMOVE) $(INST_OK_BINDIR)/apiok
 
 # 打包相关变量
 VERSION ?= $(shell date +%Y%m%d)
@@ -144,8 +144,8 @@ BUILD_DIR ?= ./build
 package:
 	@echo "开始打包 APIOK（包含 OpenResty）..."
 	@mkdir -p $(BUILD_DIR)
-	@if [ ! -d "$(INST_OAK_PRODIR)" ]; then \
-		echo "错误: APIOK 安装目录不存在: $(INST_OAK_PRODIR)"; \
+	@if [ ! -d "$(INST_OK_PRODIR)" ]; then \
+		echo "错误: APIOK 安装目录不存在: $(INST_OK_PRODIR)"; \
 		echo "请先运行 make install"; \
 		exit 1; \
 	fi
@@ -156,7 +156,7 @@ package:
 	@echo "创建压缩包..."
 	@cd $(BUILD_DIR) && \
 		mkdir -p apiok-package && \
-		cp -a $(INST_OAK_PRODIR) apiok-package/apiok && \
+		cp -a $(INST_OK_PRODIR) apiok-package/apiok && \
 		cp -a $(OPENRESTY_PREFIX) apiok-package/openresty && \
 		tar -czf apiok-$(VERSION)-$(ARCH).tar.gz apiok-package/ && \
 		rm -rf apiok-package
@@ -171,13 +171,13 @@ clean:
 	@echo "清理构建文件..."
 	@$(REMOVE) $(BUILD_DIR)
 	@echo "清理安装目录..."
-	@if [ -d "$(INST_OAK_PRODIR)" ]; then \
-		echo "删除 APIOK 安装目录: $(INST_OAK_PRODIR)"; \
-		$(REMOVE) $(INST_OAK_PRODIR); \
+	@if [ -d "$(INST_OK_PRODIR)" ]; then \
+		echo "删除 APIOK 安装目录: $(INST_OK_PRODIR)"; \
+		$(REMOVE) $(INST_OK_PRODIR); \
 	fi
-	@if [ -f "$(INST_OAK_BINDIR)/apiok" ]; then \
-		echo "删除 APIOK 可执行文件: $(INST_OAK_BINDIR)/apiok"; \
-		$(REMOVE) $(INST_OAK_BINDIR)/apiok; \
+	@if [ -f "$(INST_OK_BINDIR)/apiok" ]; then \
+		echo "删除 APIOK 可执行文件: $(INST_OK_BINDIR)/apiok"; \
+		$(REMOVE) $(INST_OK_BINDIR)/apiok; \
 	fi
 	@echo "清理完成"
 

@@ -90,8 +90,8 @@ local function filter_headers(headers, include_headers, exclude_headers)
     return filtered
 end
 
-local function collect_log_data(oak_ctx, plugin_config)
-    local matched = oak_ctx.matched or {}
+local function collect_log_data(ok_ctx, plugin_config)
+    local matched = ok_ctx.matched or {}
     local ngx_var = ngx.var
     
     local log_data = {
@@ -158,8 +158,8 @@ local function collect_log_data(oak_ctx, plugin_config)
         log_data.request.args = matched.args
     end
     
-    if oak_ctx.config and oak_ctx.config.service_router then
-        local service_router = oak_ctx.config.service_router
+    if ok_ctx.config and ok_ctx.config.service_router then
+        local service_router = ok_ctx.config.service_router
         if service_router.service then
             log_data.service = {
                 name = service_router.service.name,
@@ -183,7 +183,7 @@ function _M.schema_config(config)
     return nil
 end
 
-function _M.http_body_filter(oak_ctx, plugin_config)
+function _M.http_body_filter(ok_ctx, plugin_config)
     if not plugin_config.enabled or not plugin_config.include_response_body then
         return
     end
@@ -205,12 +205,12 @@ function _M.http_body_filter(oak_ctx, plugin_config)
     end
 end
 
-function _M.http_log(oak_ctx, plugin_config)
+function _M.http_log(ok_ctx, plugin_config)
     if not plugin_config.enabled then
         return
     end
     
-    local log_data = collect_log_data(oak_ctx, plugin_config)
+    local log_data = collect_log_data(ok_ctx, plugin_config)
     
     local pool = get_mysql_pool(plugin_config)
     local db, err = get_mysql_connection(pool)

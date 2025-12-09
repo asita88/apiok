@@ -17,12 +17,12 @@ function _M.schema_config(config)
     return nil
 end
 
-function _M.http_access(oak_ctx, plugin_config)
+function _M.http_access(ok_ctx, plugin_config)
 
-    local matched = oak_ctx.matched
+    local matched = ok_ctx.matched
 
     if not matched.header then
-        pdk.log.error("[key-auth] oak_ctx format err!")
+        pdk.log.error("[key-auth] ok_ctx format err!")
     end
 
     local header_key = matched.header["APIOK-KEY-AUTH"]
