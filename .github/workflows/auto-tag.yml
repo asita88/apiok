@@ -15,6 +15,12 @@ jobs:
         with:
           fetch-depth: 0
       
+      - name: Get version
+        id: version
+        run: |
+          VERSION=$(grep -E "major = |minor = |patch = " apiok/sys/meta.lua | sed 's/.*= //' | sed 's/,//' | tr '\n' '.' | sed 's/\.$//')
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+      
       - name: Get short commit SHA
         id: commit
         run: echo "sha=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
@@ -26,7 +32,7 @@ jobs:
       - name: Create tag
         id: tag
         run: |
-          TAG_NAME="auto-${{ steps.date.outputs.date }}-${{ steps.commit.outputs.sha }}"
+          TAG_NAME="v${{ steps.version.outputs.version }}-${{ steps.date.outputs.date }}-${{ steps.commit.outputs.sha }}"
           if git rev-parse "$TAG_NAME" >/dev/null 2>&1; then
             echo "Tag $TAG_NAME already exists"
             exit 0
