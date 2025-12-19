@@ -8,7 +8,7 @@ echo ""
 
 # [1/4] 编译安装 OpenResty
 echo "[1/4] 编译安装 OpenResty..."
-make build-openresty || {
+make build || {
     echo "错误: OpenResty 编译失败"
     exit 1
 }

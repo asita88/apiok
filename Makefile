@@ -13,12 +13,12 @@ OPENRESTY_PREFIX ?= /usr/local/openresty
 
 # 默认目标：执行完整的构建和安装流程
 .PHONY: all
-all: deps build-openresty install
+all: deps build install
 	@echo "APIOK 构建和安装完成！"
 
 # 编译安装 OpenResty
-.PHONY: build-openresty
-build-openresty:
+.PHONY: build
+build:
 	@echo "编译安装 OpenResty..."
 	@if [ -f scripts/build-openresty.sh ]; then \
 		chmod +x scripts/build-openresty.sh && \
