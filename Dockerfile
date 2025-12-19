@@ -8,7 +8,7 @@ COPY scripts /build/scripts
 
 RUN chmod +x /build/scripts/*.sh
 
-RUN OPENRESTY_VERSION=1.21.4.1 OPENRESTY_PREFIX=/usr/local/openresty make build-openresty
+RUN make OPENRESTY_VERSION=1.21.4.1 OPENRESTY_PREFIX=/usr/local/openresty build-openresty
 
 COPY apiok /build/apiok
 COPY bin /build/bin

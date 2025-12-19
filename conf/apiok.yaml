@@ -18,7 +18,8 @@ consul:
 
 # MySQL 配置（当 storage.engine = mysql 时使用）
 mysql:
-  host: 172.27.128.1
+  #host: host.docker.internal
+  host: 127.0.0.1
   port: 3306
   database: apiok
   user: root
