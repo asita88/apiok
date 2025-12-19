@@ -1,6 +1,7 @@
 # 构建输出
 build/
 *.tar.gz
+!deps/**/*.tar.gz
 *.zip
 
 # 依赖目录
