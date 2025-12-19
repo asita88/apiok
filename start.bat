@@ -6,7 +6,9 @@ setlocal enabledelayedexpansion
 
 REM Configuration
 set IMAGE_NAME=apiok
+set BASE_IMAGE_NAME=apiok-base
 set CONTAINER_NAME=apiok
+set BUILD_BASE=0
 
 REM Generate version based on current date and time (YYYYMMDDHHMMSS)
 set "YYYY=%date:~0,4%"
@@ -40,8 +42,48 @@ if not errorlevel 1 (
     docker rm %CONTAINER_NAME% >nul 2>&1
 )
 
+REM Check if base image exists or needs to be built
+docker images --format "{{.Repository}}:{{.Tag}}" | findstr /C:"%BASE_IMAGE_NAME%:latest" >nul
+if errorlevel 1 (
+    echo.
+    echo ========================================
+    echo Base image not found, building: %BASE_IMAGE_NAME%
+    echo ========================================
+    echo.
+    set BUILD_BASE=1
+) else (
+    echo.
+    echo Base image %BASE_IMAGE_NAME%:latest found.
+    echo.
+)
+
+REM Check command line arguments
+if "%1"=="--rebuild-base" (
+    set BUILD_BASE=1
+    echo.
+    echo Force rebuilding base image...
+    echo.
+)
+
+REM Build base image if needed
+if %BUILD_BASE%==1 (
+    echo ========================================
+    echo Building base image: %BASE_IMAGE_NAME%
+    echo ========================================
+    echo.
+    docker build -f Dockerfile.base -t %BASE_IMAGE_NAME%:latest .
+    if errorlevel 1 (
+        echo.
+        echo ERROR: Base image build failed!
+        pause
+        exit /b 1
+    )
+    echo.
+    echo Base image built successfully!
+    echo.
+)
+
 REM Build the Docker image
-echo.
 echo ========================================
 echo Building Docker image: %IMAGE_NAME%
 echo ========================================

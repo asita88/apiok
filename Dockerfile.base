@@ -1,0 +1,39 @@
+FROM ubuntu:20.04
+
+ENV DEBIAN_FRONTEND=noninteractive
+ENV TZ=Asia/Shanghai
+
+WORKDIR /build
+
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    gcc \
+    g++ \
+    git \
+    curl \
+    wget \
+    automake \
+    autoconf \
+    libtool \
+    libpcre3-dev \
+    libssl-dev \
+    zlib1g-dev \
+    software-properties-common \
+    lsb-release \
+    ca-certificates \
+    make \
+    perl \
+    unzip \
+    vim \
+    less \
+    tree \
+    htop \
+    strace \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN mkdir -p /output && \
+    mkdir -p /usr/local/openresty && \
+    mkdir -p /usr/local/apiok
+
+WORKDIR /build
+
