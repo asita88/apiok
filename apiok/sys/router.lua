@@ -4,7 +4,7 @@ local pdk    = require("apiok.pdk")
 local dao    = require("apiok.dao")
 local events = require("resty.worker.events")
 local schema = require("apiok.schema")
-local oakrouting          = require("resty.oakrouting")
+local okrouting           = require("apiok.sys.routing")
 local sys_certificate     = require("apiok.sys.certificate")
 local sys_balancer        = require("apiok.sys.balancer")
 local sys_plugin          = require("apiok.sys.plugin")
@@ -540,7 +540,7 @@ local function worker_event_router_handler_register()
             router_objects = nil
             current_router_data = nil
         else
-            router_objects = oakrouting.new(ok_router_data)
+            router_objects = okrouting.new(ok_router_data)
             current_router_data = pdk.json.decode(pdk.json.encode(data, true))
             if router_objects then
                 pdk.log.info("router_handler: router_objects created successfully")

@@ -1,7 +1,7 @@
 local pdk         = require("apiok.pdk")
 local dao         = require("apiok.dao")
 local schema      = require("apiok.schema")
-local oakrouting  = require("resty.oakrouting")
+local okrouting   = require("apiok.sys.routing")
 local events      = require("resty.worker.events")
 local ngx_ssl     = require("ngx.ssl")
 local ngx_process = require("ngx.process")
@@ -82,7 +82,7 @@ local function worker_event_certificate_handler_register()
             until true
         end
 
-        ssl_objects = oakrouting.new(ok_ssl_data)
+        ssl_objects = okrouting.new(ok_ssl_data)
 
     end
 

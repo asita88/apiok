@@ -1,4 +1,4 @@
-local oakrouting = require("resty.oakrouting")
+local okrouting  = require("apiok.sys.routing")
 local admin      = require("apiok.admin")
 local router
 
@@ -6,7 +6,7 @@ local _M = {}
 
 function _M.init_worker()
 
-    router = oakrouting.new()
+    router = okrouting.new()
 
     router:post("/apiok/admin/sync/reload", admin.sync.reload)
     router:get("/apiok/admin/router/info", admin.sync.get_router_info)

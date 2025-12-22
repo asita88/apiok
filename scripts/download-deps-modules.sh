@@ -24,7 +24,6 @@ declare -a MODULES=(
     "lua-resty-jit-uuid:thibaultcha/lua-resty-jit-uuid:0.0.7"
     "lua-resty-http:ledgetech/lua-resty-http:v0.16"
     "lua-resty-worker-events:Kong/lua-resty-worker-events:2.0.1"
-    "lua-resty-oakrouting:apiok/lua-resty-oakrouting:v0.2.0"
     "lua-resty-dns:openresty/lua-resty-dns:v0.21"
     "lua-resty-balancer:openresty/lua-resty-balancer:0.05"
     "lua-resty-lrucache:openresty/lua-resty-lrucache:v0.09"
