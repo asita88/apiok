@@ -1,5 +1,6 @@
 local pdk    = require("apiok.pdk")
 local common = require("apiok.admin.dao.common")
+local sys_router = require("apiok.sys.router")
 
 local _M = {}
 
@@ -12,6 +13,17 @@ function _M.reload()
     end
 
     pdk.response.exit(200, { message = "sync reload success" })
+end
+
+function _M.get_router_info()
+    local router_data = sys_router.get_router_info()
+    
+    if not router_data then
+        pdk.response.exit(200, { data = {}, message = "no router data loaded" })
+        return
+    end
+
+    pdk.response.exit(200, { data = router_data })
 end
 
 return _M

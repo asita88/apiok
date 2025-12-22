@@ -86,7 +86,7 @@ function _M.sync_update_plugin_data()
             end
 
             pdk.table.insert(plugins_data_list, {
-                id      = list.list[i].id,
+                name    = list.list[i].name,
                 key     = list.list[i].key,
                 config  = list.list[i].config,
             })

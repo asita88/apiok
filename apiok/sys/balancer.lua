@@ -44,7 +44,7 @@ function _M.sync_update_upstream_data()
         return nil
     end
 
-    local node_map_by_id = {}
+    local node_map_by_name = {}
 
     if node_list and node_list.list and (#node_list.list > 0) then
 
@@ -66,8 +66,13 @@ function _M.sync_update_upstream_data()
                     break
                 end
 
-                node_map_by_id[node_list.list[i].id] = {
-                    id      = node_list.list[i].id,
+                if not node_list.list[i].name then
+                    pdk.log.warn("sync_update_upstream_data: upstream node missing name, skip")
+                    break
+                end
+
+                node_map_by_name[node_list.list[i].name] = {
+                    name    = node_list.list[i].name,
                     address = node_list.list[i].address,
                     port    = node_list.list[i].port,
                     weight  = node_list.list[i].weight,
@@ -109,9 +114,16 @@ function _M.sync_update_upstream_data()
             for k = 1, #upstream_list.list[j].nodes do
 
                 repeat
-                    local node = node_map_by_id[upstream_list.list[j].nodes[k].id]
+                    local node_key = upstream_list.list[j].nodes[k].name
+                    if not node_key then
+                        pdk.log.warn("sync_update_upstream_data: upstream node reference missing name, skip")
+                        break
+                    end
+
+                    local node = node_map_by_name[node_key]
 
                     if not node then
+                        pdk.log.warn("sync_update_upstream_data: upstream node not found: [" .. tostring(node_key) .. "]")
                         break
                     end
 
@@ -127,7 +139,7 @@ function _M.sync_update_upstream_data()
             end
 
             table.insert(upstreams_nodes_list, {
-                id              = upstream_list.list[j].id,
+                name            = upstream_list.list[j].name,
                 nodes           = upstream_nodes,
                 algorithm       = upstream_list.list[j].algorithm,
                 read_timeout    = upstream_list.list[j].read_timeout,

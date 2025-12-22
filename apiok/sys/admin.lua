@@ -9,6 +9,7 @@ function _M.init_worker()
     router = oakrouting.new()
 
     router:post("/apiok/admin/sync/reload", admin.sync.reload)
+    router:get("/apiok/admin/router/info", admin.sync.get_router_info)
 
 end
 
