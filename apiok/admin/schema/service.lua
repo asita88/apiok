@@ -163,7 +163,7 @@ _M.service_data = {
         proxy_cache = proxy_cache_config,
         proxy_set_header = proxy_set_header_config
     },
-    required   = { "id", "name", "protocols", "hosts", "plugins", "enabled" }
+    required   = { "name", "protocols", "hosts", "plugins", "enabled" }
 }
 
 return _M

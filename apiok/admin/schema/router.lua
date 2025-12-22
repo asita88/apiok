@@ -178,7 +178,7 @@ _M.router_data = {
         proxy_cache = proxy_cache_config,
         proxy_set_header = proxy_set_header_config
     },
-    required   = { "id", "name", "methods", "paths", "headers", "service", "plugins", "upstream", "enabled" }
+    required   = { "name", "methods", "paths", "headers", "service", "plugins", "upstream", "enabled" }
 }
 
 return _M

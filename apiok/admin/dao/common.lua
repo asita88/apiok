@@ -24,8 +24,14 @@ _M.APIOK_PREFIX = function()
 end
 
 _M.DATA_PREFIX   = _M.APIOK_PREFIX() .. "data/"
-_M.HASH_PREFIX   = _M.APIOK_PREFIX() .. "system/hash/"
+_M.HASH_PREFIX   = _M.APIOK_PREFIX() .. "hash/"
 
+-- services => /apiok/data/services/
+-- routers => /apiok/data/routers/
+-- plugins => /apiok/data/plugins/
+-- upstreams => /apiok/data/upstreams/
+-- certificates => /apiok/data/certificates/
+-- upstream_nodes => /apiok/data/upstream_nodes/
 _M.PREFIX_MAP = {
     services       = _M.DATA_PREFIX .. pdk.const.CONSUL_PRFX_SERVICES .. "/",
     routers        = _M.DATA_PREFIX .. pdk.const.CONSUL_PRFX_ROUTERS .. "/",
@@ -41,6 +47,8 @@ _M.HASH_PREFIX_MAP = {
 
 function _M.get_key(key)
 
+    pdk.log.info("get_key: key: [" .. key .. "]")
+
     local d, err = storage.get_key(key)
 
     if err then
@@ -51,6 +59,8 @@ function _M.get_key(key)
 end
 
 function _M.put_key(key, value, args)
+
+    pdk.log.info("put_key: key: [" .. key .. "]")
 
     local d, err = storage.put_key(key, value, args)
 
@@ -63,6 +73,8 @@ end
 
 function _M.list_keys(prefix)
 
+    pdk.log.info("list_keys: prefix: [" .. prefix .. "]")
+
     local keys, err = storage.list_keys(prefix)
 
     if err then
@@ -73,6 +85,9 @@ function _M.list_keys(prefix)
 end
 
 function _M.detail_key(key)
+
+
+    pdk.log.info("detail_key: key: [" .. key .. "]")
 
     local d, err = _M.get_key(key)
 
@@ -251,6 +266,7 @@ function _M.update_sync_data_hash(init)
     end
 
     local key = _M.HASH_PREFIX_MAP[pdk.const.CONSUL_SYNC_UPDATE]
+    pdk.log.info("update_sync_data_hash: key: [" .. key .. "]")
     local millisecond = ngx.now()
     local hash_key = key .. ":" .. millisecond .. rand()
     local hash = pdk.string.md5(hash_key)
@@ -273,7 +289,7 @@ end
 function _M.get_sync_data()
 
     local key = _M.HASH_PREFIX_MAP[pdk.const.CONSUL_SYNC_UPDATE]
-
+    pdk.log.info("get_sync_data: key: [" .. key .. "]")
     local hash_data, err = _M.get_key(key)
 
     if err then
@@ -290,7 +306,7 @@ end
 function _M.clear_sync_data()
 
     local key = _M.HASH_PREFIX_MAP[pdk.const.CONSUL_SYNC_UPDATE]
-
+    pdk.log.info("clear_sync_data: key: [" .. key .. "]")
     local delete, err = storage.delete_key(key)
 
     if err then

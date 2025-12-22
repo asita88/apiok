@@ -1,5 +1,6 @@
 local config = require("apiok.sys.config")
 local json = require("apiok.pdk.json")
+local log = require("apiok.pdk.log")
 
 local _M = {
     _VERSION = '0.6.0',
@@ -39,27 +40,29 @@ local function parse_key(key)
     end
     
     local prefix = parts[1]  -- apiok
-    local category = parts[2]  -- data 或 system
+    local category = parts[2]  -- data 或 hash
     local type_name = nil
     local name_or_id = nil
     
     if category == "data" then
         -- apiok/data/services/service_name 或 apiok/data/services/resource_id
+        -- apiok/data/services/ (用于批量获取)
         if #parts >= 4 then
             type_name = parts[3]  -- services/routers/plugins等
             name_or_id = parts[4]
+        elseif #parts >= 3 then
+            type_name = parts[3]  -- services/routers/plugins等
+            name_or_id = nil  -- 批量获取，不指定具体名称
         end
         return "data", type_name, name_or_id, nil
-    elseif category == "system" then
-        if #parts >= 4 and parts[3] == "hash" then
-            -- apiok/system/hash/sync/update
-            if #parts >= 5 then
-                type_name = parts[4] .. "/" .. parts[5]  -- sync/update
-            elseif #parts >= 4 then
-                type_name = parts[4]  -- sync
-            end
-            return "hash", type_name, nil, nil
+    elseif category == "hash" then
+        -- apiok/hash/sync/update
+        if #parts >= 4 then
+            type_name = parts[3] .. "/" .. parts[4]  -- sync/update
+        elseif #parts >= 3 then
+            type_name = parts[3]  -- sync
         end
+        return "hash", type_name, nil, nil
     end
     
     return nil, nil, nil, "unknown key category: " .. key
