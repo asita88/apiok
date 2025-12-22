@@ -165,7 +165,7 @@ function APIOK.http_access()
         pdk.response.exit(404, { err_message = "\"URI\" Undefined" })
     end
 
-    -- 动态设置 client_max_body_size
+    -- 动态检查 client_max_body_size
     -- 优先级：路由配置 > 服务配置 > 默认值（0 = 无限制）
     local service_router = ok_ctx.config.service_router
     if service_router then
@@ -179,12 +179,12 @@ function APIOK.http_access()
             body_size = service_router.client_max_body_size
         end
         
-        -- 如果配置了 body_size，动态设置
+        -- 如果配置了 body_size，检查请求体大小
         if body_size then
             -- 解析 body_size（支持数字或字符串，如 "10m", "100k", "1g"）
-            local size_value = nil
+            local size_limit = nil
             if type(body_size) == "number" then
-                size_value = body_size
+                size_limit = body_size
             elseif type(body_size) == "string" then
                 -- 解析带单位的字符串
                 local num, unit = string.match(body_size, "^([%d%.]+)([kmgKMG]?)$")
@@ -193,21 +193,46 @@ function APIOK.http_access()
                     if num then
                         unit = string.lower(unit or "")
                         if unit == "k" then
-                            size_value = num * 1024
+                            size_limit = num * 1024
                         elseif unit == "m" then
-                            size_value = num * 1024 * 1024
+                            size_limit = num * 1024 * 1024
                         elseif unit == "g" then
-                            size_value = num * 1024 * 1024 * 1024
+                            size_limit = num * 1024 * 1024 * 1024
                         else
-                            size_value = num
+                            size_limit = num
                         end
                     end
                 end
             end
             
-            -- 设置 client_max_body_size（必须在请求体读取之前设置）
-            if size_value and size_value >= 0 then
-                ngx.var.client_max_body_size = size_value
+            -- 检查请求体大小（size_limit > 0 表示有限制）
+            if size_limit and size_limit > 0 then
+                local headers = ngx.req.get_headers()
+                local content_length = headers["content-length"]
+                
+                if content_length then
+                    -- 有 Content-Length 头，直接检查
+                    local length = tonumber(content_length)
+                    if length and length > size_limit then
+                        pdk.log.warn("request body size exceeds limit: [" .. tostring(length) .. "] > [" .. tostring(size_limit) .. "]")
+                        pdk.response.exit(413, { err_message = "Request Entity Too Large: body size " .. tostring(length) .. " exceeds limit " .. tostring(size_limit) })
+                        return
+                    end
+                else
+                    -- 没有 Content-Length（可能是 chunked encoding），需要读取请求体后检查
+                    -- 先尝试读取请求体（如果还没有读取）
+                    ngx.req.read_body()
+                    local body_data = ngx.req.get_body_data()
+                    
+                    if body_data then
+                        local body_size_actual = #body_data
+                        if body_size_actual > size_limit then
+                            pdk.log.warn("request body size exceeds limit: [" .. tostring(body_size_actual) .. "] > [" .. tostring(size_limit) .. "]")
+                            pdk.response.exit(413, { err_message = "Request Entity Too Large: body size " .. tostring(body_size_actual) .. " exceeds limit " .. tostring(size_limit) })
+                            return
+                        end
+                    end
+                end
             end
         end
         
