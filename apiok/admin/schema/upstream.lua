@@ -38,7 +38,7 @@ _M.created = {
             default = pdk.const.BALANCER_ROUNDROBIN,
             enum    = { pdk.const.BALANCER_ROUNDROBIN, pdk.const.BALANCER_CHASH }
         },
-        nodes           = common.items_array_id_or_name,
+        nodes           = common.items_array_name,
         connect_timeout = {
             type    = "number",
             minimum = timeout_minimum,
@@ -67,7 +67,7 @@ _M.updated = {
         upstream_key    = common.param_key,
         name            = common.name,
         algorithm       = algorithm,
-        nodes           = common.items_array_id_or_name,
+        nodes           = common.items_array_name,
         connect_timeout = connect_timeout,
         write_timeout   = write_timeout,
         read_timeout    = read_timeout
@@ -78,15 +78,14 @@ _M.updated = {
 _M.upstream_data = {
     type       = "object",
     properties = {
-        id              = common.id,
         name            = common.name,
         algorithm       = algorithm,
-        nodes           = common.items_array_id_or_name,
+        nodes           = common.items_array_name,
         connect_timeout = connect_timeout,
         write_timeout   = write_timeout,
         read_timeout    = read_timeout
     },
-    required   = { "id", "name", "algorithm", "nodes", "connect_timeout", "write_timeout", "read_timeout" }
+    required   = { "name", "algorithm", "nodes", "connect_timeout", "write_timeout", "read_timeout" }
 }
 
 return _M

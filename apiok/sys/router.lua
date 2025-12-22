@@ -424,6 +424,11 @@ local function generate_router_data(router_data)
                             break
                         end
 
+                        local upstream_copy = nil
+                        if router_data.routers[j].upstream then
+                            upstream_copy = pdk.json.decode(pdk.json.encode(router_data.routers[j].upstream, true))
+                        end
+
                         local host_router_data = {
                             plugins   = router_data.plugins,
                             protocols = router_data.protocols,
@@ -436,7 +441,7 @@ local function generate_router_data(router_data)
                             router    = {
                                 path     = router_data.routers[j].paths[k],
                                 plugins  = router_data.routers[j].plugins,
-                                upstream = router_data.routers[j].upstream,
+                                upstream = upstream_copy,
                                 headers  = router_data.routers[j].headers,
                                 methods  = router_data.routers[j].methods,
                                 client_max_body_size = router_data.routers[j].client_max_body_size,
@@ -536,7 +541,7 @@ local function worker_event_router_handler_register()
             current_router_data = nil
         else
             router_objects = oakrouting.new(ok_router_data)
-            current_router_data = data
+            current_router_data = pdk.json.decode(pdk.json.encode(data, true))
             if router_objects then
                 pdk.log.info("router_handler: router_objects created successfully")
             else

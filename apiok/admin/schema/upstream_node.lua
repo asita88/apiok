@@ -202,7 +202,6 @@ _M.updated = {
 _M.upstream_node_data = {
     type       = "object",
     properties = {
-        id      = common.id,
         name    = common.name,
         address = address,
         port    = port,
@@ -229,7 +228,7 @@ _M.upstream_node_data = {
         },
         tags = tags
     },
-    required   = { "id", "name", "address", "port", "weight", "health", "check" }
+    required   = { "name", "address", "port", "weight", "health", "check" }
 }
 
 _M.schema_ip = address

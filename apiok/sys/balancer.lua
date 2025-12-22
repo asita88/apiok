@@ -175,9 +175,9 @@ local function generate_upstream_balancer(upstream_data)
         for j = 1, #nodes do
             -- 如果启用了健康检测，只添加健康的节点
             local is_healthy = true
-            if upstream_data.id then
+            if upstream_data.name then
                 is_healthy = healthcheck_module.is_target_healthy(
-                    upstream_data.id, nodes[j].address, nodes[j].port)
+                    upstream_data.name, nodes[j].address, nodes[j].port)
             end
             
             if is_healthy then
@@ -309,7 +309,7 @@ local function worker_event_upstream_handler_register()
         local new_upstream_object = {}
 
         for i = 1, #data do
-            new_upstream_object[data[i].id] = generate_upstream_balancer(data[i])
+            new_upstream_object[data[i].name] = generate_upstream_balancer(data[i])
         end
 
         renew_upstream_balancer_object(new_upstream_object)
@@ -357,8 +357,8 @@ function _M.check_replenish_upstream(ok_ctx)
 
     local service_router = ok_ctx.config.service_router
 
-    if service_router.router.upstream and service_router.router.upstream.id and
-            upstream_objects[service_router.router.upstream.id] then
+    if service_router.router.upstream and service_router.router.upstream.name and
+            upstream_objects[service_router.router.upstream.name] then
         return
     end
 
@@ -425,9 +425,9 @@ function _M.gogogo(ok_ctx)
         connect_timeout = pdk.const.UPSTREAM_DEFAULT_TIMEOUT,
     }
 
-    if upstream.id then
+    if upstream.name then
 
-        local upstream_object = upstream_objects[upstream.id]
+        local upstream_object = upstream_objects[upstream.name]
 
         if not upstream_object then
             pdk.log.error("[sys.balancer.gogogo] upstream undefined, upstream_object is null!")
@@ -515,7 +515,7 @@ function _M.gogogo(ok_ctx)
                 local check_port = tonumber(address_port_table[2])
                 
                 -- 检查节点健康状态
-                if healthcheck_module.is_target_healthy(upstream.id, check_address, check_port) then
+                if upstream.name and healthcheck_module.is_target_healthy(upstream.name, check_address, check_port) then
                     break
                 else
                     -- 节点不健康，从负载均衡器中移除并重试

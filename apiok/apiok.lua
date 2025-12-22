@@ -29,11 +29,11 @@ local function run_plugin(phase, ok_ctx)
 
             repeat
 
-                if not plugin_objects[router_plugins[i].id] then
+                if not router_plugins[i].name or not plugin_objects[router_plugins[i].name] then
                     break
                 end
 
-                local router_plugin_object = plugin_objects[router_plugins[i].id]
+                local router_plugin_object = plugin_objects[router_plugins[i].name]
 
                 router_plugin_keys_map[router_plugin_object.key] = 0
 
@@ -54,11 +54,11 @@ local function run_plugin(phase, ok_ctx)
 
             repeat
 
-                if not plugin_objects[service_plugins[j].id] then
+                if not service_plugins[j].name or not plugin_objects[service_plugins[j].name] then
                     break
                 end
 
-                local service_plugin_object = plugin_objects[service_plugins[j].id]
+                local service_plugin_object = plugin_objects[service_plugins[j].name]
 
                 if router_plugin_keys_map[service_plugin_object.key] then
                     break

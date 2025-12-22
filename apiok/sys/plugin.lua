@@ -121,7 +121,7 @@ local function worker_event_plugin_handler_register()
         local plugins_name_handler_map = plugins_handler_map_name()
 
         for i = 1, #data do
-            plugin_objects[data[i].id] = {
+            plugin_objects[data[i].name] = {
                 key     = data[i].key,
                 config  = data[i].config,
                 handler = plugins_name_handler_map[data[i].key],

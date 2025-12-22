@@ -51,12 +51,11 @@ _M.deleted = {
 _M.plugin_data = {
     type       = "object",
     properties = {
-        id     = common.id,
         name   = common.name,
         key    = key,
         config = config,
     },
-    required   = { "id", "name", "key", "config" }
+    required   = { "name", "key", "config" }
 }
 
 return _M

@@ -18,18 +18,18 @@ local DEFAULT_CHECK_SUCCESSES = 2
 local DEFAULT_CHECK_FAILURES = 3
 
 -- 初始化健康检测器
-local function init_healthchecker(upstream_id, nodes)
-    if not upstream_id or not nodes or #nodes == 0 then
-        return nil, "invalid upstream_id or nodes"
+local function init_healthchecker(upstream_name, nodes)
+    if not upstream_name or not nodes or #nodes == 0 then
+        return nil, "invalid upstream_name or nodes"
     end
 
     -- 如果已经存在，先清理旧的
-    if healthcheckers[upstream_id] then
-        healthcheckers[upstream_id] = nil
+    if healthcheckers[upstream_name] then
+        healthcheckers[upstream_name] = nil
     end
 
     local checker, err = healthcheck.new({
-        name = "upstream_" .. upstream_id,
+        name = "upstream_" .. upstream_name,
         shm_name = "upstream_health_check",
         type = "http",
         checks = {
@@ -76,14 +76,14 @@ local function init_healthchecker(upstream_id, nodes)
         end
     end
 
-    healthcheckers[upstream_id] = checker
+    healthcheckers[upstream_name] = checker
     return checker, nil
 end
 
 -- 根据节点配置初始化健康检测器
-local function init_healthchecker_with_config(upstream_id, nodes, node_configs)
-    if not upstream_id or not nodes or #nodes == 0 then
-        return nil, "invalid upstream_id or nodes"
+local function init_healthchecker_with_config(upstream_name, nodes, node_configs)
+    if not upstream_name or not nodes or #nodes == 0 then
+        return nil, "invalid upstream_name or nodes"
     end
 
     -- 检查是否有节点启用了健康检测
@@ -106,8 +106,8 @@ local function init_healthchecker_with_config(upstream_id, nodes, node_configs)
     local check_timeout = check_config.timeout or DEFAULT_CHECK_TIMEOUT
 
     -- 如果已经存在，先清理旧的
-    if healthcheckers[upstream_id] then
-        healthcheckers[upstream_id] = nil
+    if healthcheckers[upstream_name] then
+        healthcheckers[upstream_name] = nil
     end
 
     -- 读取健康检测参数
@@ -119,7 +119,7 @@ local function init_healthchecker_with_config(upstream_id, nodes, node_configs)
     local unhealthy_timeouts = check_config.unhealthy_timeouts or DEFAULT_CHECK_FAILURES
 
     local checker_config = {
-        name = "upstream_" .. upstream_id,
+        name = "upstream_" .. upstream_name,
         shm_name = "upstream_health_check",
         type = check_config.tcp and "tcp" or "http",
         checks = {
@@ -178,18 +178,18 @@ local function init_healthchecker_with_config(upstream_id, nodes, node_configs)
         end
     end
 
-    healthcheckers[upstream_id] = checker
+    healthcheckers[upstream_name] = checker
     return checker, nil
 end
 
 -- 获取健康检测器
-function _M.get_checker(upstream_id)
-    return healthcheckers[upstream_id]
+function _M.get_checker(upstream_name)
+    return healthcheckers[upstream_name]
 end
 
 -- 检查节点是否健康
-function _M.is_target_healthy(upstream_id, address, port)
-    local checker = healthcheckers[upstream_id]
+function _M.is_target_healthy(upstream_name, address, port)
+    local checker = healthcheckers[upstream_name]
     if not checker then
         -- 如果没有健康检测器，默认认为健康
         return true
@@ -204,11 +204,11 @@ function _M.is_target_healthy(upstream_id, address, port)
 end
 
 -- 更新健康检测器
-function _M.update_checker(upstream_id, nodes, node_configs)
-    if not upstream_id or not nodes or #nodes == 0 then
+function _M.update_checker(upstream_name, nodes, node_configs)
+    if not upstream_name or not nodes or #nodes == 0 then
         -- 清理旧的检测器
-        if healthcheckers[upstream_id] then
-            healthcheckers[upstream_id] = nil
+        if healthcheckers[upstream_name] then
+            healthcheckers[upstream_name] = nil
         end
         return
     end
@@ -226,8 +226,8 @@ function _M.update_checker(upstream_id, nodes, node_configs)
 
     if not has_enabled_check then
         -- 没有启用健康检测，清理旧的检测器
-        if healthcheckers[upstream_id] then
-            healthcheckers[upstream_id] = nil
+        if healthcheckers[upstream_name] then
+            healthcheckers[upstream_name] = nil
         end
         return
     end
@@ -235,13 +235,13 @@ function _M.update_checker(upstream_id, nodes, node_configs)
     -- 初始化或更新健康检测器
     local checker, err
     if node_configs and #node_configs > 0 then
-        checker, err = init_healthchecker_with_config(upstream_id, nodes, node_configs)
+        checker, err = init_healthchecker_with_config(upstream_name, nodes, node_configs)
     else
-        checker, err = init_healthchecker(upstream_id, nodes)
+        checker, err = init_healthchecker(upstream_name, nodes)
     end
 
     if err then
-        pdk.log.error("update_checker failed for upstream_id: ", upstream_id, " error: ", err)
+        pdk.log.error("update_checker failed for upstream_name: ", upstream_name, " error: ", err)
     end
 end
 
@@ -258,14 +258,14 @@ function _M.sync_update_checkers(upstreams_data)
         return
     end
 
-    local node_map_by_id = {}
+    local node_map_by_name = {}
     if node_list and node_list.list and (#node_list.list > 0) then
         for i = 1, #node_list.list do
             local node_data, err = dao.common.get_key(dao.common.PREFIX_MAP.upstream_nodes .. node_list.list[i])
             if not err and node_data then
                 local node_obj = pdk.json.decode(node_data)
-                if node_obj and node_obj.id then
-                    node_map_by_id[node_obj.id] = node_obj
+                if node_obj and node_obj.name then
+                    node_map_by_name[node_obj.name] = node_obj
                 end
             end
         end
@@ -274,17 +274,17 @@ function _M.sync_update_checkers(upstreams_data)
     -- 更新每个 upstream 的健康检测器
     for i = 1, #upstreams_data do
         local upstream = upstreams_data[i]
-        if upstream.id and upstream.nodes and #upstream.nodes > 0 then
-            -- 获取节点配置（nodes 中已经包含了 id）
+        if upstream.name and upstream.nodes and #upstream.nodes > 0 then
+            -- 获取节点配置（nodes 中已经包含了 name）
             local node_configs = {}
             for j = 1, #upstream.nodes do
-                local node_id = upstream.nodes[j].id
-                if node_id and node_map_by_id[node_id] then
-                    table.insert(node_configs, node_map_by_id[node_id])
+                local node_name = upstream.nodes[j].name
+                if node_name and node_map_by_name[node_name] then
+                    table.insert(node_configs, node_map_by_name[node_name])
                 end
             end
 
-            _M.update_checker(upstream.id, upstream.nodes, node_configs)
+            _M.update_checker(upstream.name, upstream.nodes, node_configs)
         end
     end
 end
