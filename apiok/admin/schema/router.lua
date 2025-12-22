@@ -166,7 +166,7 @@ _M.router_data = {
         paths    = paths,
         headers  = headers,
         service  = common.items_object_name,
-        plugins  = common.items_array_name,
+        plugins  = common.items_array_name_or_null,
         upstream = {
             type = "object"
         },
@@ -177,7 +177,7 @@ _M.router_data = {
         proxy_cache = proxy_cache_config,
         proxy_set_header = proxy_set_header_config
     },
-    required   = { "name", "methods", "paths", "headers", "service", "plugins", "upstream", "enabled" }
+    required   = { "name", "methods", "paths", "headers", "service", "upstream", "enabled" }
 }
 
 return _M

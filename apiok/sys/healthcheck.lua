@@ -261,12 +261,9 @@ function _M.sync_update_checkers(upstreams_data)
     local node_map_by_name = {}
     if node_list and node_list.list and (#node_list.list > 0) then
         for i = 1, #node_list.list do
-            local node_data, err = dao.common.get_key(dao.common.PREFIX_MAP.upstream_nodes .. node_list.list[i])
-            if not err and node_data then
-                local node_obj = pdk.json.decode(node_data)
-                if node_obj and node_obj.name then
-                    node_map_by_name[node_obj.name] = node_obj
-                end
+            local node_obj = node_list.list[i]
+            if node_obj and node_obj.name then
+                node_map_by_name[node_obj.name] = node_obj
             end
         end
     end

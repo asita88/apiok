@@ -154,7 +154,7 @@ _M.service_data = {
         name      = common.name,
         protocols = protocols,
         hosts     = hosts,
-        plugins   = common.items_array_name,
+        plugins   = common.items_array_name_or_null,
         enabled   = enabled,
         client_max_body_size = client_max_body_size,
         chunked_transfer_encoding = chunked_transfer_encoding,
@@ -162,7 +162,7 @@ _M.service_data = {
         proxy_cache = proxy_cache_config,
         proxy_set_header = proxy_set_header_config
     },
-    required   = { "name", "protocols", "hosts", "plugins", "enabled" }
+    required   = { "name", "protocols", "hosts", "enabled" }
 }
 
 return _M
