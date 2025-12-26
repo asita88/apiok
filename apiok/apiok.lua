@@ -12,7 +12,7 @@ local function run_plugin(phase, ok_ctx)
 
     if not config then
         pdk.log.error("run_plugin plugin data not ready!")
-        pdk.response.exit(500, { message = "config not ready" })
+        pdk.response.exit(500, { message = "config not ready" }, nil, "config not ready", "system")
     end
 
     local service_router  = config.service_router
@@ -20,8 +20,19 @@ local function run_plugin(phase, ok_ctx)
     local router_plugins  = service_router.router.plugins
 
     local plugin_objects = sys.plugin.plugin_subjects()
+    local global_plugin_objects = sys.plugin.global_plugin_subjects()
 
     local router_plugin_keys_map = {}
+    local global_plugin_keys_map = {}
+
+    if global_plugin_objects and next(global_plugin_objects) then
+        for global_plugin_name, global_plugin_object in pairs(global_plugin_objects) do
+            if global_plugin_object and global_plugin_object.handler and global_plugin_object.handler[phase] then
+                global_plugin_keys_map[global_plugin_object.key] = 0
+                global_plugin_object.handler[phase](ok_ctx, global_plugin_object.config)
+            end
+        end
+    end
 
     if #router_plugins > 0 then
 
@@ -61,6 +72,10 @@ local function run_plugin(phase, ok_ctx)
                 local service_plugin_object = plugin_objects[service_plugins[j].name]
 
                 if router_plugin_keys_map[service_plugin_object.key] then
+                    break
+                end
+
+                if global_plugin_keys_map[service_plugin_object.key] then
                     break
                 end
 
@@ -162,7 +177,7 @@ function APIOK.http_access()
     local match_succeed = sys.router.router_match(ok_ctx)
 
     if not match_succeed then
-        pdk.response.exit(404, { err_message = "\"URI\" Undefined" })
+        pdk.response.exit(404, { err_message = "\"URI\" Undefined" }, nil, "\"URI\" Undefined", "router")
     end
 
     -- 动态检查 client_max_body_size
@@ -215,7 +230,8 @@ function APIOK.http_access()
                     local length = tonumber(content_length)
                     if length and length > size_limit then
                         pdk.log.warn("request body size exceeds limit: [" .. tostring(length) .. "] > [" .. tostring(size_limit) .. "]")
-                        pdk.response.exit(413, { err_message = "Request Entity Too Large: body size " .. tostring(length) .. " exceeds limit " .. tostring(size_limit) })
+                        pdk.response.exit(413, { err_message = "Request Entity Too Large: body size " .. tostring(length) .. " exceeds limit " .. tostring(size_limit) }, nil,
+                                "Request Entity Too Large: body size " .. tostring(length) .. " exceeds limit " .. tostring(size_limit), "client_max_body_size")
                         return
                     end
                 else
@@ -228,7 +244,8 @@ function APIOK.http_access()
                         local body_size_actual = #body_data
                         if body_size_actual > size_limit then
                             pdk.log.warn("request body size exceeds limit: [" .. tostring(body_size_actual) .. "] > [" .. tostring(size_limit) .. "]")
-                            pdk.response.exit(413, { err_message = "Request Entity Too Large: body size " .. tostring(body_size_actual) .. " exceeds limit " .. tostring(size_limit) })
+                            pdk.response.exit(413, { err_message = "Request Entity Too Large: body size " .. tostring(body_size_actual) .. " exceeds limit " .. tostring(size_limit) }, nil,
+                                    "Request Entity Too Large: body size " .. tostring(body_size_actual) .. " exceeds limit " .. tostring(size_limit), "client_max_body_size")
                             return
                         end
                     end

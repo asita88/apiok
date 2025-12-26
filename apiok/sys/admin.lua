@@ -10,6 +10,9 @@ function _M.init_worker()
 
     router:post("/apiok/admin/sync/reload", admin.sync.reload)
     router:get("/apiok/admin/router/info", admin.sync.get_router_info)
+    router:get("/apiok/admin/config/all", admin.sync.get_all_config)
+    router:get("/apiok/admin/config/active", admin.sync.get_active_config)
+    router:get("/apiok/admin/metrics", admin.metrics.export)
 
 end
 

@@ -130,10 +130,36 @@ endif
 	$(COPY) sql           	$(INST_OK_PRODIR)/sql/ 2>/dev/null || true
 	$(COPY) doc           	$(INST_OK_PRODIR)/doc/ 2>/dev/null || true
 
+.PHONY: install-logrotate
+install-logrotate:
+	@echo "安装 logrotate 配置..."
+	@if [ ! -f conf/apiok-logrotate.conf ]; then \
+		echo "错误: conf/apiok-logrotate.conf 不存在"; \
+		exit 1; \
+	fi
+	@if ! command -v logrotate &> /dev/null; then \
+		echo "错误: logrotate 未安装"; \
+		echo "请先安装 logrotate:"; \
+		echo "  Ubuntu/Debian: sudo apt-get install logrotate"; \
+		echo "  CentOS/RHEL: sudo yum install logrotate"; \
+		exit 1; \
+	fi
+	@$(INSTALL) -m 644 conf/apiok-logrotate.conf /etc/logrotate.d/apiok
+	@echo "✓ logrotate 配置已安装到 /etc/logrotate.d/apiok"
+	@echo "测试配置..."
+	@logrotate -d /etc/logrotate.d/apiok > /dev/null 2>&1 && \
+		echo "✓ logrotate 配置测试通过" || \
+		echo "⚠ 警告: logrotate 配置测试失败，请检查配置"
+
 .PHONY: uninstall
 uninstall:
 	$(REMOVE) $(INST_OK_PRODIR)
 	$(REMOVE) $(INST_OK_BINDIR)/apiok
+	@if [ -f /etc/logrotate.d/apiok ]; then \
+		echo "删除 logrotate 配置..."; \
+		$(REMOVE) /etc/logrotate.d/apiok; \
+		echo "✓ logrotate 配置已删除"; \
+	fi
 
 # 打包相关变量
 VERSION ?= $(shell date +%Y%m%d)

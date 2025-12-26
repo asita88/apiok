@@ -12,7 +12,7 @@ local function execute_cmd(cmd)
 end
 
 local apiok_home
-if script_path:sub(1, 4) == '/usr' or script_path:sub(1, 4) == '/bin' then
+if script_path:sub(1, 4) == '/usr' or script_path:sub(1, 4) == '/bin' or script_path:sub(1, 4) == '/opt' then
     apiok_home = "/usr/local/apiok"
     package.cpath = "/usr/local/apiok/deps/lib64/lua/5.1/?.so;"
             .. "/usr/local/apiok/deps/lib/lua/5.1/?.so;"

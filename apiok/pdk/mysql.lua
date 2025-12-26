@@ -23,10 +23,9 @@ local TABLE_MAPPING = {
     sync_hash = "apiok_sync_hash",
 }
 
--- 解析 key，提取 type 和 name/id
--- key 格式: apiok/data/services/service_name 或 apiok/data/services/resource_id
 local function parse_key(key)
     if not key or type(key) ~= "string" then
+        log.error("parse_key: invalid key, type: " .. type(key))
         return nil, nil, nil, "invalid key"
     end
     
@@ -36,35 +35,36 @@ local function parse_key(key)
     end
     
     if #parts < 3 then
+        log.error("parse_key: invalid key format, key: " .. key .. ", parts: " .. #parts)
         return nil, nil, nil, "invalid key format"
     end
     
-    local prefix = parts[1]  -- apiok
-    local category = parts[2]  -- data 或 hash
+    local prefix = parts[1]
+    local category = parts[2]
     local type_name = nil
     local name_or_id = nil
     
     if category == "data" then
-        -- apiok/data/services/service_name 或 apiok/data/services/resource_id
-        -- apiok/data/services/ (用于批量获取)
         if #parts >= 4 then
-            type_name = parts[3]  -- services/routers/plugins等
+            type_name = parts[3]
             name_or_id = parts[4]
         elseif #parts >= 3 then
-            type_name = parts[3]  -- services/routers/plugins等
-            name_or_id = nil  -- 批量获取，不指定具体名称
+            type_name = parts[3]
+            name_or_id = nil
         end
+        log.debug("parse_key: key: " .. key .. ", category: data, type: " .. tostring(type_name) .. ", name: " .. tostring(name_or_id))
         return "data", type_name, name_or_id, nil
     elseif category == "hash" then
-        -- apiok/hash/sync/update
         if #parts >= 4 then
-            type_name = parts[3] .. "/" .. parts[4]  -- sync/update
+            type_name = parts[3] .. "/" .. parts[4]
         elseif #parts >= 3 then
-            type_name = parts[3]  -- sync
+            type_name = parts[3]
         end
+        log.debug("parse_key: key: " .. key .. ", category: hash, type: " .. tostring(type_name))
         return "hash", type_name, nil, nil
     end
     
+    log.error("parse_key: unknown key category, key: " .. key .. ", category: " .. tostring(category))
     return nil, nil, nil, "unknown key category: " .. key
 end
 

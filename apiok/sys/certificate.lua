@@ -73,7 +73,7 @@ local function worker_event_certificate_handler_register()
                 local ssl_data, ssl_data_err = generate_ssl_data(data[i])
 
                 if ssl_data_err then
-                    pdk.log.error("certificate_handler: generate ssl data err: [" .. tostring(ssl_data_err) .. "]")
+                    pdk.log.error("generate ssl data err: [" .. tostring(ssl_data_err) .. "]")
                     break
                 end
 
@@ -97,12 +97,12 @@ function _M.sync_update_ssl_data()
     local ssl_list, ssl_list_err = dao.common.list_keys(dao.common.PREFIX_MAP.certificates)
 
     if ssl_list_err then
-        pdk.log.error("sync_update_ssl_data: get ssl list FAIL [".. ssl_list_err .."]")
+        pdk.log.error("get ssl list FAIL [".. ssl_list_err .."]")
         return nil
     end
 
     if not ssl_list or not ssl_list.list or (#ssl_list.list == 0) then
-        pdk.log.error("sync_update_ssl_data: ssl list null [" .. pdk.json.encode(ssl_list, true) .. "]")
+        pdk.log.error("ssl list null [" .. pdk.json.encode(ssl_list, true) .. "]")
         return nil
     end
 
@@ -114,7 +114,7 @@ function _M.sync_update_ssl_data()
             local _, err = pdk.schema.check(schema.certificate.sync_data_certificate, ssl_list.list[i])
 
             if err then
-                pdk.log.error("sync_update_ssl_data: schema check err:[" .. err .. "]["
+                pdk.log.error("schema check err:[" .. err .. "]["
                                       .. pdk.json.encode(ssl_list.list[i], true) .. "]")
                 break
             end
@@ -182,7 +182,7 @@ end
 function _M.ssl_match(ok_ctx)
 
     if not ok_ctx.matched or not ok_ctx.matched.host then
-        pdk.log.error("ssl_match: ok_ctx data format err: [" .. pdk.json.encode(ok_ctx, true) .. "]")
+        pdk.log.error("ok_ctx data format err: [" .. pdk.json.encode(ok_ctx, true) .. "]")
         return false
     end
 
@@ -196,7 +196,7 @@ function _M.ssl_match(ok_ctx)
     local match, err = ssl_objects:dispatch(match_sni, oakrouting_ssl_method, ok_ctx)
 
     if err then
-        pdk.log.error("ssl_match: ssl_objects dispatch err: [" .. tostring(err) .. "]")
+        pdk.log.error("ssl_objects dispatch err: [" .. tostring(err) .. "]")
         return false
     end
 
@@ -209,28 +209,28 @@ function _M.ssl_match(ok_ctx)
     local parsed_cert, err = fetch_parsed_cert(ok_ctx.matched.host, ok_ctx.config.cert_key.cert)
 
     if err ~= nil then
-        pdk.log.error("failed to parse pem cert" ,err)
+        pdk.log.error("failed to parse pem cert, err: [" .. tostring(err) .. "]")
         return false
     end
 
     local ok, err = ngx_ssl.set_cert(parsed_cert)
 
     if err ~= nil or not ok then
-        pdk.log.error("failed to set pem cert" ,err)
+        pdk.log.error("failed to set pem cert, err: [" .. tostring(err) .. "]")
         return false
     end
 
     local parsed_priv_key, err = fetch_parsed_priv_key(ok_ctx.matched.host, ok_ctx.config.cert_key.key)
 
     if err ~= nil then
-        pdk.log.error("failed to parse pem priv key" ,err)
+        pdk.log.error("failed to parse pem priv key, err: [" .. tostring(err) .. "]")
         return false
     end
 
     local ok, err = ngx_ssl.set_priv_key(parsed_priv_key)
 
     if err ~= nil or not ok then
-        pdk.log.error("failed to set pem priv key" ,err)
+        pdk.log.error("failed to set pem priv key, err: [" .. tostring(err) .. "]")
         return false
     end
 

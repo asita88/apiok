@@ -30,13 +30,15 @@ function _M.http_access(ok_ctx, plugin_config)
 
     if not jwt_token then
         pdk.response.exit(
-                401, { message = "[jwt-auth] Authorization FAIL, header \"APIOK-JWT-AUTH\" is required" })
+                401, { message = "[jwt-auth] Authorization FAIL, header \"APIOK-JWT-AUTH\" is required" }, nil,
+                "[jwt-auth] Authorization FAIL, header \"APIOK-JWT-AUTH\" is required", "jwt-auth")
     end
 
     local jwt_verify = jwt:verify(plugin_config.jwt_key, jwt_token)
 
     if not jwt_verify.verified then
-        pdk.response.exit(401, { err_message = "[jwt-auth] Authorization FAIL" })
+        pdk.response.exit(401, { err_message = "[jwt-auth] Authorization FAIL" }, nil,
+                "[jwt-auth] Authorization FAIL", "jwt-auth")
     end
 
 end

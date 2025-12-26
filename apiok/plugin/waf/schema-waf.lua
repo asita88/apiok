@@ -1,121 +1,99 @@
 local _M = {}
 
 _M.schema = {
-    type       = "object",
+    type = "object",
     properties = {
         enabled = {
-            type    = "boolean",
-            default = true,
+            type = "boolean",
+            default = true
         },
         ip_whitelist = {
-            type        = "array",
-            items       = {
-                type = "string",
+            type = "object",
+            properties = {
+                enabled = {
+                    type = "boolean",
+                    default = true
+                },
+                ip_list = {
+                    type = "array",
+                    items = {
+                        type = "string"
+                    },
+                    description = "IP whitelist, supports wildcard (e.g., 192.168.1.*)"
+                }
             },
-            description = "IP whitelist, requests from these IPs will bypass all checks",
+            required = { "enabled", "ip_list" }
         },
         ip_blacklist = {
-            type        = "array",
-            items       = {
-                type = "string",
-            },
-            description = "IP blacklist, requests from these IPs will be blocked",
-        },
-        sql_injection = {
-            type       = "object",
+            type = "object",
             properties = {
                 enabled = {
-                    type    = "boolean",
-                    default = true,
+                    type = "boolean",
+                    default = true
                 },
-                action  = {
-                    type = "string",
-                    enum = { "block", "log" },
-                    default = "block",
-                },
+                ip_list = {
+                    type = "array",
+                    items = {
+                        type = "string"
+                    },
+                    description = "IP blacklist, supports wildcard (e.g., 192.168.1.*)"
+                }
             },
-            default = {
-                enabled = true,
-                action  = "block",
-            },
+            required = { "enabled", "ip_list" }
         },
-        xss = {
-            type       = "object",
+        rules = {
+            type = "object",
             properties = {
-                enabled = {
-                    type    = "boolean",
-                    default = true,
-                },
-                action  = {
-                    type = "string",
-                    enum = { "block", "log" },
-                    default = "block",
-                },
-            },
-            default = {
-                enabled = true,
-                action  = "block",
-            },
-        },
-        path_traversal = {
-            type       = "object",
-            properties = {
-                enabled = {
-                    type    = "boolean",
-                    default = true,
-                },
-                action  = {
-                    type = "string",
-                    enum = { "block", "log" },
-                    default = "block",
-                },
-            },
-            default = {
-                enabled = true,
-                action  = "block",
-            },
-        },
-        allowed_methods = {
-            type        = "array",
-            items       = {
-                type = "string",
-                enum = { "GET", "POST", "PUT", "DELETE", "PATCH", "HEAD", "OPTIONS" },
-            },
-            description = "Allowed HTTP methods, empty means all methods are allowed",
-        },
-        blocked_user_agents = {
-            type        = "array",
-            items       = {
-                type = "string",
-            },
-            description = "Blocked User-Agent patterns (supports wildcard)",
-        },
-        max_request_size = {
-            type        = "number",
-            minimum     = 0,
-            description = "Maximum request body size in bytes, 0 means unlimited",
-            default     = 0,
-        },
-        sensitive_data_leak = {
-            type       = "object",
-            properties = {
-                enabled = {
-                    type    = "boolean",
-                    default = true,
-                },
-                action  = {
-                    type = "string",
-                    enum = { "block", "log" },
-                    default = "block",
-                },
-            },
-            default = {
-                enabled = true,
-                action  = "block",
-            },
-        },
+                rule_list = {
+                    type = "array",
+                    items = {
+                        type = "object",
+                        properties = {
+                            name = {
+                                type = "string",
+                                description = "Rule group name for logging"
+                            },
+                            conditions = {
+                                type = "array",
+                                items = {
+                                    type = "object",
+                                    properties = {
+                                        patterns = {
+                                            type = "array",
+                                            items = {
+                                                type = "string"
+                                            },
+                                            description = "Patterns to match (regex or exact match for method)"
+                                        },
+                                        match_type = {
+                                            type = "string",
+                                            enum = { "uri", "args", "header", "body", "all", "method", "request_size" },
+                                            default = "all",
+                                            description = "Where to match: uri, args, header (includes User-Agent), body, all, method, or request_size"
+                                        },
+                                        operator = {
+                                            type = "string",
+                                            enum = { "match", "not_match" },
+                                            default = "match",
+                                            description = "Operator: match or not_match"
+                                        }
+                                    },
+                                    required = { "patterns", "match_type" }
+                                }
+                            },
+                            action = {
+                                type = "string",
+                                enum = { "block", "log" },
+                                default = "block"
+                            }
+                        },
+                        required = { "conditions", "action" }
+                    }
+                }
+            }
+        }
     },
+    required = { "enabled" }
 }
 
 return _M
-

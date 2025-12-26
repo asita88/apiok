@@ -5,16 +5,13 @@ WORKDIR /build
 COPY Makefile /build/Makefile
 COPY deps /build/deps
 COPY scripts /build/scripts
-
-RUN chmod +x /build/scripts/*.sh
-
-RUN make OPENRESTY_VERSION=1.21.4.1 OPENRESTY_PREFIX=/usr/local/openresty build
-
 COPY apiok /build/apiok
 COPY bin /build/bin
 COPY conf /build/conf
 COPY resty /build/resty
 
+RUN chmod +x /build/scripts/*.sh
+RUN make OPENRESTY_VERSION=1.21.4.1 OPENRESTY_PREFIX=/usr/local/openresty build
 RUN make deps && make install
 
 WORKDIR /build

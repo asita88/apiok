@@ -55,6 +55,8 @@ _M.CONSUL_PRFX_CERTIFICATES = "certificates"
 
 _M.CONSUL_PRFX_UPSTREAM_NODES = "upstream_nodes"
 
+_M.CONSUL_PRFX_GLOBAL_PLUGINS = "global_plugins"
+
 _M.CONSUL_SYNC_UPDATE = "sync_update"
 
 _M.METHODS_ALL    = "ALL"

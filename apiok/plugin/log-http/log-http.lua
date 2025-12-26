@@ -1,52 +1,13 @@
 local ngx = ngx
 local pdk = require("apiok.pdk")
 local json = require("apiok.pdk.json")
+local http = require("resty.http")
 
 local plugin_common = require("apiok.plugin.plugin_common")
 
-local plugin_name = "log-kafka"
+local plugin_name = "log-http"
 
 local _M = {}
-
-local kafka_clients = {}
-
-local function get_kafka_client(brokers, timeout, keepalive_timeout)
-    local brokers_key = table.concat(brokers, ",")
-    local client = kafka_clients[brokers_key]
-    
-    if not client then
-        local kafka = require("resty.kafka.client")
-        local kafka_producer = require("resty.kafka.producer")
-        
-        local kafka_client = kafka:new(brokers, {
-            socket_timeout = timeout,
-            keepalive_timeout = keepalive_timeout,
-        })
-        
-        local err = kafka_client:fetch_metadata()
-        if err then
-            pdk.log.error("[log-kafka] failed to fetch metadata: ", err)
-            return nil, err
-        end
-        
-        local producer = kafka_producer:new(brokers, {
-            producer_type = "async",
-            socket_timeout = timeout,
-            keepalive_timeout = keepalive_timeout,
-            max_retry = 3,
-            retry_backoff = 1000,
-        })
-        
-        client = {
-            client = kafka_client,
-            producer = producer,
-        }
-        
-        kafka_clients[brokers_key] = client
-    end
-    
-    return client.producer, nil
-end
 
 local function should_include_header(header_name, include_headers, exclude_headers)
     if exclude_headers then
@@ -201,26 +162,83 @@ function _M.http_body_filter(ok_ctx, plugin_config)
     end
 end
 
-local function send_log_to_kafka(premature, plugin_config, log_message, key)
+local function send_log_to_http(premature, plugin_config, log_message)
     if premature then
         return
     end
     
-    local producer, err = get_kafka_client(
-        plugin_config.brokers,
-        plugin_config.timeout or 5000,
-        plugin_config.keepalive_timeout or 60000
-    )
+    local httpc = http.new()
+    httpc:set_timeout(plugin_config.timeout or 5000)
     
-    if not producer then
-        pdk.log.error("[log-kafka] failed to get kafka producer: ", err)
+    local parsed_uri = httpc:parse_uri(plugin_config.url, false)
+    if not parsed_uri then
+        pdk.log.error("[log-http] failed to parse URL: ", plugin_config.url)
         return
     end
     
-    local ok, send_err = producer:send(plugin_config.topic, key, log_message)
+    local scheme, host, port, path, query = unpack(parsed_uri)
     
+    local ok, err = httpc:connect(host, port)
     if not ok then
-        pdk.log.error("[log-kafka] failed to send log to kafka: ", send_err)
+        pdk.log.error("[log-http] failed to connect: ", err)
+        return
+    end
+    
+    if scheme == "https" then
+        local ok, err = httpc:ssl_handshake(false, host, false)
+        if not ok then
+            pdk.log.error("[log-http] failed to SSL handshake: ", err)
+            httpc:close()
+            return
+        end
+    end
+    
+    local request_headers = {}
+    if plugin_config.headers then
+        for k, v in pairs(plugin_config.headers) do
+            request_headers[k] = v
+        end
+    end
+    
+    if not request_headers["Content-Type"] then
+        if plugin_config.log_format == "text" then
+            request_headers["Content-Type"] = "text/plain"
+        else
+            request_headers["Content-Type"] = "application/json"
+        end
+    end
+    
+    local res, err = httpc:request({
+        path = path,
+        query = query,
+        method = plugin_config.method or "POST",
+        headers = request_headers,
+        body = log_message,
+    })
+    
+    if not res then
+        pdk.log.error("[log-http] failed to send request: ", err)
+        httpc:close()
+        return
+    end
+    
+    local res_body, err = res:read_body()
+    if not res_body then
+        pdk.log.error("[log-http] failed to read response: ", err)
+        httpc:close()
+        return
+    end
+    
+    if res.status < 200 or res.status >= 300 then
+        pdk.log.error("[log-http] HTTP error: ", res.status, ", body: ", res_body)
+    end
+    
+    local keepalive_timeout = plugin_config.keepalive_timeout or 60000
+    local keepalive_pool = plugin_config.keepalive_pool or 10
+    local ok, err = httpc:set_keepalive(keepalive_timeout, keepalive_pool)
+    if not ok then
+        pdk.log.error("[log-http] failed to set keepalive: ", err)
+        httpc:close()
     end
 end
 
@@ -248,11 +266,9 @@ function _M.http_log(ok_ctx, plugin_config)
         log_message = json.encode(log_data)
     end
     
-    local key = log_data.request.remote_addr or ""
-    
-    local ok, err = ngx.timer.at(0, send_log_to_kafka, plugin_config, log_message, key)
+    local ok, err = ngx.timer.at(0, send_log_to_http, plugin_config, log_message)
     if not ok then
-        pdk.log.error("[log-kafka] failed to create timer: ", err)
+        pdk.log.error("[log-http] failed to create timer: ", err)
     end
 end
 

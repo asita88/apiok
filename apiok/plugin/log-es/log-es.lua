@@ -1,51 +1,39 @@
 local ngx = ngx
 local pdk = require("apiok.pdk")
 local json = require("apiok.pdk.json")
+local http = require("resty.http")
 
 local plugin_common = require("apiok.plugin.plugin_common")
 
-local plugin_name = "log-kafka"
+local plugin_name = "log-es"
 
 local _M = {}
 
-local kafka_clients = {}
+local es_buffers = {}
 
-local function get_kafka_client(brokers, timeout, keepalive_timeout)
-    local brokers_key = table.concat(brokers, ",")
-    local client = kafka_clients[brokers_key]
+local function get_es_buffer(plugin_config)
+    local buffer_key = plugin_config.host .. ":" .. plugin_config.port
+    local buffer = es_buffers[buffer_key]
     
-    if not client then
-        local kafka = require("resty.kafka.client")
-        local kafka_producer = require("resty.kafka.producer")
-        
-        local kafka_client = kafka:new(brokers, {
-            socket_timeout = timeout,
-            keepalive_timeout = keepalive_timeout,
-        })
-        
-        local err = kafka_client:fetch_metadata()
-        if err then
-            pdk.log.error("[log-kafka] failed to fetch metadata: ", err)
-            return nil, err
-        end
-        
-        local producer = kafka_producer:new(brokers, {
-            producer_type = "async",
-            socket_timeout = timeout,
-            keepalive_timeout = keepalive_timeout,
-            max_retry = 3,
-            retry_backoff = 1000,
-        })
-        
-        client = {
-            client = kafka_client,
-            producer = producer,
+    if not buffer then
+        buffer = {
+            host = plugin_config.host,
+            port = plugin_config.port,
+            scheme = plugin_config.scheme or "http",
+            index_prefix = plugin_config.index_prefix or "apiok",
+            index_type = plugin_config.index_type or "logs",
+            username = plugin_config.username,
+            password = plugin_config.password,
+            timeout = plugin_config.timeout or 5000,
+            batch_size = plugin_config.batch_size or 100,
+            batch_timeout = plugin_config.batch_timeout or 5000,
+            logs = {},
+            last_flush = ngx.now() * 1000,
         }
-        
-        kafka_clients[brokers_key] = client
+        es_buffers[buffer_key] = buffer
     end
     
-    return client.producer, nil
+    return buffer
 end
 
 local function should_include_header(header_name, include_headers, exclude_headers)
@@ -90,6 +78,7 @@ local function collect_log_data(ok_ctx, plugin_config)
     
     local log_data = {
         timestamp = ngx.time(),
+        "@timestamp" = ngx_var.time_iso8601 or os.date("!%Y-%m-%dT%H:%M:%S+00:00", ngx.time()),
         request = {
             method = ngx.req.get_method(),
             uri = matched.uri or ngx_var.request_uri,
@@ -110,6 +99,8 @@ local function collect_log_data(ok_ctx, plugin_config)
         upstream = {
             response_time = ngx_var.upstream_response_time or nil,
             connect_time = ngx_var.upstream_connect_time or nil,
+            addr = ngx_var.upstream_addr or nil,
+            status = ngx_var.upstream_status or nil,
         },
         request_time = tonumber(ngx_var.request_time) or 0,
         bytes_sent = tonumber(ngx_var.bytes_sent) or 0,
@@ -125,7 +116,7 @@ local function collect_log_data(ok_ctx, plugin_config)
                 log_data.request.body = matched.body
             end
         else
-            log_data.request.body = matched.body
+            log_data.request.body = json.encode(matched.body)
         end
     end
     
@@ -138,7 +129,7 @@ local function collect_log_data(ok_ctx, plugin_config)
                 log_data.response.body = response_body
             end
         else
-            log_data.response.body = response_body
+            log_data.response.body = json.encode(response_body)
         end
     end
     
@@ -171,6 +162,102 @@ local function collect_log_data(ok_ctx, plugin_config)
     return log_data
 end
 
+local function get_index_name(plugin_config)
+    local index_prefix = plugin_config.index_prefix or "apiok"
+    local date_format = plugin_config.date_format or "%Y.%m.%d"
+    local date_str = os.date(date_format)
+    return index_prefix .. "-" .. date_str
+end
+
+local function flush_es_buffer(premature, buffer)
+    if premature then
+        return
+    end
+    
+    if #buffer.logs == 0 then
+        return
+    end
+    
+    local httpc = http.new()
+    httpc:set_timeout(buffer.timeout)
+    
+    local ok, err = httpc:connect(buffer.host, buffer.port)
+    if not ok then
+        pdk.log.error("failed to connect to ES, err: [" .. tostring(err) .. "]")
+        buffer.logs = {}
+        return
+    end
+    
+    if buffer.scheme == "https" then
+        local ok, err = httpc:ssl_handshake(false, buffer.host, false)
+        if not ok then
+            pdk.log.error("failed to SSL handshake, err: [" .. tostring(err) .. "]")
+            httpc:close()
+            buffer.logs = {}
+            return
+        end
+    end
+    
+    local bulk_body = ""
+    local index_name = get_index_name(buffer)
+    for _, log_data in ipairs(buffer.logs) do
+        local action = {
+            index = {
+                _index = index_name,
+                _type = buffer.index_type,
+            }
+        }
+        bulk_body = bulk_body .. json.encode(action) .. "\n"
+        bulk_body = bulk_body .. json.encode(log_data) .. "\n"
+    end
+    
+    local request_headers = {
+        ["Content-Type"] = "application/x-ndjson",
+    }
+    
+    if buffer.username and buffer.password then
+        local auth = ngx.encode_base64(buffer.username .. ":" .. buffer.password)
+        request_headers["Authorization"] = "Basic " .. auth
+    end
+    
+    local res, err = httpc:request({
+        path = "/_bulk",
+        method = "POST",
+        headers = request_headers,
+        body = bulk_body,
+    })
+    
+    if not res then
+        pdk.log.error("failed to send request to ES, err: [" .. tostring(err) .. "]")
+        httpc:close()
+        buffer.logs = {}
+        return
+    end
+    
+    local res_body, err = res:read_body()
+    if not res_body then
+        pdk.log.error("failed to read ES response, err: [" .. tostring(err) .. "]")
+        httpc:close()
+        buffer.logs = {}
+        return
+    end
+    
+    if res.status < 200 or res.status >= 300 then
+        pdk.log.error("ES bulk API error, status: [" .. res.status .. "], body: [" .. res_body .. "]")
+    end
+    
+    local keepalive_timeout = buffer.keepalive_timeout or 60000
+    local keepalive_pool = buffer.keepalive_pool or 10
+    local ok, err = httpc:set_keepalive(keepalive_timeout, keepalive_pool)
+    if not ok then
+        pdk.log.error("failed to set keepalive, err: [" .. tostring(err) .. "]")
+        httpc:close()
+    end
+    
+    buffer.logs = {}
+    buffer.last_flush = ngx.now() * 1000
+end
+
 function _M.schema_config(config)
     local plugin_schema_err = plugin_common.plugin_config_schema(plugin_name, config)
     if plugin_schema_err then
@@ -201,29 +288,6 @@ function _M.http_body_filter(ok_ctx, plugin_config)
     end
 end
 
-local function send_log_to_kafka(premature, plugin_config, log_message, key)
-    if premature then
-        return
-    end
-    
-    local producer, err = get_kafka_client(
-        plugin_config.brokers,
-        plugin_config.timeout or 5000,
-        plugin_config.keepalive_timeout or 60000
-    )
-    
-    if not producer then
-        pdk.log.error("[log-kafka] failed to get kafka producer: ", err)
-        return
-    end
-    
-    local ok, send_err = producer:send(plugin_config.topic, key, log_message)
-    
-    if not ok then
-        pdk.log.error("[log-kafka] failed to send log to kafka: ", send_err)
-    end
-end
-
 function _M.http_log(ok_ctx, plugin_config)
     if not plugin_config.enabled then
         return
@@ -231,28 +295,23 @@ function _M.http_log(ok_ctx, plugin_config)
     
     local log_data = collect_log_data(ok_ctx, plugin_config)
     
-    local log_message
-    if plugin_config.log_format == "text" then
-        log_message = string.format(
-            "[%s] %s %s %s %s %s %s %s",
-            os.date("%Y-%m-%d %H:%M:%S", log_data.timestamp),
-            log_data.request.remote_addr,
-            log_data.request.method,
-            log_data.request.uri,
-            log_data.response.status,
-            log_data.bytes_sent,
-            log_data.request_time,
-            log_data.request.host or ""
-        )
-    else
-        log_message = json.encode(log_data)
+    local buffer = get_es_buffer(plugin_config)
+    table.insert(buffer.logs, log_data)
+    
+    local should_flush = false
+    local now = ngx.now() * 1000
+    
+    if #buffer.logs >= buffer.batch_size then
+        should_flush = true
+    elseif (now - buffer.last_flush) >= buffer.batch_timeout then
+        should_flush = true
     end
     
-    local key = log_data.request.remote_addr or ""
-    
-    local ok, err = ngx.timer.at(0, send_log_to_kafka, plugin_config, log_message, key)
-    if not ok then
-        pdk.log.error("[log-kafka] failed to create timer: ", err)
+    if should_flush then
+        local ok, err = ngx.timer.at(0, flush_es_buffer, buffer)
+        if not ok then
+            pdk.log.error("failed to create timer, err: [" .. tostring(err) .. "]")
+        end
     end
 end
 

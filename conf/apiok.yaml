@@ -22,7 +22,7 @@ mysql:
   #host: 127.0.0.1
   port: 3306
   database: apiok
-  user: root
+  user: apiok
   password: "123456"
   pool_size: 100
   backlog: 100
@@ -36,4 +36,14 @@ plugins:
   - limit-req
   - limit-conn
   - limit-count
+  - ip-blacklist
+  - ip-whitelist
+  - log-http
+  - log-kafka
+  - log-mysql
+  - prometheus
+  - request-rewrite
+  - response-rewrite
+  - traffic-tag
+  - waf
 

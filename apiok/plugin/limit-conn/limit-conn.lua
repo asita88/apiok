@@ -51,13 +51,15 @@ function _M.http_access(ok_ctx, plugin_config)
     local matched = ok_ctx.matched
 
     if not matched.host or not matched.uri then
-        pdk.response.exit(500, { message = "[limit-conn] Configuration data format error" })
+        pdk.response.exit(500, { message = "[limit-conn] Configuration data format error" }, nil,
+                "[limit-conn] Configuration data format error", "limit-conn")
     end
 
     local limit = create_limit_object(matched, plugin_config)
 
     if not limit then
-        pdk.response.exit(500, { message = "[limit-conn] Failed to instantiate a Limit-Conn object" })
+        pdk.response.exit(500, { message = "[limit-conn] Failed to instantiate a Limit-Conn object" }, nil,
+                "[limit-conn] Failed to instantiate a Limit-Conn object", "limit-conn")
     end
 
     local unique_key = ngx_var.remote_addr
@@ -66,9 +68,11 @@ function _M.http_access(ok_ctx, plugin_config)
 
     if not delay then
         if err == "rejected" then
-            pdk.response.exit(503, { message = "[limit-conn] Access denied" })
+            pdk.response.exit(503, { message = "[limit-conn] Access denied" }, nil,
+                    "[limit-conn] Access denied", "limit-conn")
         end
-        pdk.response.exit(500, { message = "[limit-conn] Failed to limit request, " .. err })
+        pdk.response.exit(500, { message = "[limit-conn] Failed to limit request, " .. err }, nil,
+                "[limit-conn] Failed to limit request, " .. err, "limit-conn")
     end
 
     if limit:is_committed() then

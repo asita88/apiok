@@ -49,13 +49,15 @@ function _M.http_access(ok_ctx, plugin_config)
     local matched = ok_ctx.matched
 
     if not matched.host or not matched.uri then
-        pdk.response.exit(500, { message = "[limit-conn] Configuration data format error" })
+        pdk.response.exit(500, { message = "[limit-conn] Configuration data format error" }, nil,
+                "[limit-count] Configuration data format error", "limit-count")
     end
 
     local limit = create_limit_object(matched, plugin_config)
 
     if not limit then
-        pdk.response.exit(500, { message = "[limit-count] Failed to instantiate a Limit-Count object" })
+        pdk.response.exit(500, { message = "[limit-count] Failed to instantiate a Limit-Count object" }, nil,
+                "[limit-count] Failed to instantiate a Limit-Count object", "limit-count")
     end
 
     local unique_key = ngx_var.remote_addr
@@ -68,11 +70,13 @@ function _M.http_access(ok_ctx, plugin_config)
 
             pdk.response.set_header("X-RateLimit-Limit", plugin_config.count)
             pdk.response.set_header("X-RateLimit-Remaining", 0)
-            pdk.response.exit(503, { message = "[limit-count] Access denied" })
+            pdk.response.exit(503, { message = "[limit-count] Access denied" }, nil,
+                    "[limit-count] Access denied", "limit-count")
 
         end
 
-        pdk.response.exit(500, { message = "[limit-count] Failed to limit request, " .. err })
+        pdk.response.exit(500, { message = "[limit-count] Failed to limit request, " .. err }, nil,
+                "[limit-count] Failed to limit request, " .. err, "limit-count")
     end
 
     pdk.response.set_header("X-RateLimit-Limit", plugin_config.count)

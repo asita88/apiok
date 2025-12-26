@@ -83,7 +83,23 @@ if %BUILD_BASE%==1 (
     echo.
 )
 
-REM Build the Docker image
+REM Clean up old images before building
+echo ========================================
+echo Cleaning up old images...
+echo ========================================
+echo.
+
+REM Remove old versioned images (keep only latest)
+for /f "tokens=*" %%i in ('docker images "%IMAGE_NAME%" --format "{{.Repository}}:{{.Tag}}" ^| findstr /V /C:"%IMAGE_NAME%:latest"') do (
+    echo Removing old image: %%i
+    docker rmi %%i >nul 2>&1
+)
+
+REM Remove dangling images
+echo Removing dangling images...
+docker image prune -f >nul 2>&1
+
+echo.
 echo ========================================
 echo Building Docker image: %IMAGE_NAME%
 echo ========================================
@@ -114,12 +130,15 @@ echo.
 REM Ensure we're in the script directory
 cd /d "%~dp0"
 
+REM Create logs directory if it doesn't exist
+if not exist "logs" mkdir logs
 
 docker run -d ^
     --name %CONTAINER_NAME% ^
     -p 80:80 ^
     -p 443:443 ^
     -p 8080:8080 ^
+    -v "%cd%\logs:/usr/local/apiok/logs" ^
     --restart unless-stopped ^
     %IMAGE_NAME%:latest
 

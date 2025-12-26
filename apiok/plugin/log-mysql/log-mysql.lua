@@ -119,6 +119,8 @@ local function collect_log_data(ok_ctx, plugin_config)
         },
         request_time = tonumber(ngx_var.request_time) or 0,
         bytes_sent = tonumber(ngx_var.bytes_sent) or 0,
+        block_reason = ok_ctx and ok_ctx.block_reason or nil,
+        block_rule = ok_ctx and ok_ctx.block_rule or nil,
     }
     
     if plugin_config.include_request_body and matched.body then
@@ -205,18 +207,18 @@ function _M.http_body_filter(ok_ctx, plugin_config)
     end
 end
 
-function _M.http_log(ok_ctx, plugin_config)
-    if not plugin_config.enabled then
+local function insert_log_to_mysql(premature, plugin_config, log_data)
+    if premature then
         return
     end
     
-    local log_data = collect_log_data(ok_ctx, plugin_config)
+    pdk.log.info("[log-mysql] connecting to mysql, host: " .. tostring(plugin_config.host) .. ", port: " .. tostring(plugin_config.port) .. ", database: " .. tostring(plugin_config.database) .. ", user: " .. tostring(plugin_config.user))
     
     local pool = get_mysql_pool(plugin_config)
     local db, err = get_mysql_connection(pool)
     
     if not db then
-        pdk.log.error("[log-mysql] failed to connect to mysql: ", err)
+        pdk.log.error("[log-mysql] failed to connect to mysql, host: " .. tostring(plugin_config.host) .. ", port: " .. tostring(plugin_config.port) .. ", database: " .. tostring(plugin_config.database) .. ", user: " .. tostring(plugin_config.user) .. ", err: " .. tostring(err))
         return
     end
     
@@ -230,36 +232,53 @@ function _M.http_log(ok_ctx, plugin_config)
     local upstream_response_time = log_data.upstream.response_time or ""
     local upstream_connect_time = log_data.upstream.connect_time or ""
     
+    local block_reason = log_data.block_reason or ""
+    local block_rule = log_data.block_rule or ""
+    
+    local function to_string(value)
+        if value == nil then
+            return ""
+        elseif type(value) == "table" then
+            return json.encode(value) or ""
+        else
+            return tostring(value)
+        end
+    end
+    
+    local table_name = "`" .. string.gsub(plugin_config.table_name, "`", "``") .. "`"
+    
     local sql = string.format(
         "INSERT INTO %s (timestamp, request_method, request_uri, request_path, request_query_string, request_protocol, " ..
         "remote_addr, remote_port, server_addr, server_port, request_host, request_headers, request_args, request_body, " ..
         "response_status, response_headers, response_body, upstream_response_time, upstream_connect_time, " ..
-        "request_time, bytes_sent, service_name, router_name) VALUES (" ..
-        "%d, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %d, %s, %s, %s, %s, %f, %d, %s, %s)",
-        ngx.quote_sql_str(plugin_config.table_name),
+        "request_time, bytes_sent, service_name, router_name, block_reason, block_rule) VALUES (" ..
+        "%d, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %d, %s, %s, %s, %s, %f, %d, %s, %s, %s, %s)",
+        table_name,
         log_data.timestamp,
-        ngx.quote_sql_str(log_data.request.method),
-        ngx.quote_sql_str(log_data.request.uri),
-        ngx.quote_sql_str(log_data.request.path),
-        ngx.quote_sql_str(log_data.request.query_string),
-        ngx.quote_sql_str(log_data.request.protocol),
-        ngx.quote_sql_str(log_data.request.remote_addr),
-        ngx.quote_sql_str(log_data.request.remote_port),
-        ngx.quote_sql_str(log_data.request.server_addr),
-        ngx.quote_sql_str(log_data.request.server_port),
-        ngx.quote_sql_str(log_data.request.host or ""),
+        ngx.quote_sql_str(to_string(log_data.request.method)),
+        ngx.quote_sql_str(to_string(log_data.request.uri)),
+        ngx.quote_sql_str(to_string(log_data.request.path)),
+        ngx.quote_sql_str(to_string(log_data.request.query_string)),
+        ngx.quote_sql_str(to_string(log_data.request.protocol)),
+        ngx.quote_sql_str(to_string(log_data.request.remote_addr)),
+        ngx.quote_sql_str(to_string(log_data.request.remote_port)),
+        ngx.quote_sql_str(to_string(log_data.request.server_addr)),
+        ngx.quote_sql_str(to_string(log_data.request.server_port)),
+        ngx.quote_sql_str(to_string(log_data.request.host)),
         ngx.quote_sql_str(request_headers_json),
         ngx.quote_sql_str(request_args_json),
-        ngx.quote_sql_str(request_body),
+        ngx.quote_sql_str(to_string(request_body)),
         log_data.response.status,
         ngx.quote_sql_str(response_headers_json),
-        ngx.quote_sql_str(response_body),
-        ngx.quote_sql_str(upstream_response_time),
-        ngx.quote_sql_str(upstream_connect_time),
+        ngx.quote_sql_str(to_string(response_body)),
+        ngx.quote_sql_str(to_string(upstream_response_time)),
+        ngx.quote_sql_str(to_string(upstream_connect_time)),
         log_data.request_time,
         log_data.bytes_sent,
-        ngx.quote_sql_str(service_name),
-        ngx.quote_sql_str(router_name)
+        ngx.quote_sql_str(to_string(service_name)),
+        ngx.quote_sql_str(to_string(router_name)),
+        ngx.quote_sql_str(to_string(block_reason)),
+        ngx.quote_sql_str(to_string(block_rule))
     )
     
     local res, err, errcode, sqlstate = db:query(sql)
@@ -268,6 +287,19 @@ function _M.http_log(ok_ctx, plugin_config)
     
     if not res then
         pdk.log.error("[log-mysql] failed to insert log: ", err, ", errcode: ", errcode, ", sqlstate: ", sqlstate)
+    end
+end
+
+function _M.http_log(ok_ctx, plugin_config)
+    if not plugin_config.enabled then
+        return
+    end
+    
+    local log_data = collect_log_data(ok_ctx, plugin_config)
+    
+    local ok, err = ngx.timer.at(0, insert_log_to_mysql, plugin_config, log_data)
+    if not ok then
+        pdk.log.error("[log-mysql] failed to create timer: ", err)
     end
 end
 

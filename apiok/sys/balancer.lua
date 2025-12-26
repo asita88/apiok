@@ -15,6 +15,7 @@ local healthcheck_module = require("apiok.sys.healthcheck")
 local resolver_address_cache_prefix = "resolver_address_cache_prefix"
 
 local upstream_objects = {}
+local current_upstream_data = {}
 local resolver_client
 
 local _M = {}
@@ -27,12 +28,12 @@ function _M.sync_update_upstream_data()
     local upstream_list, err = dao.common.list_keys(dao.common.PREFIX_MAP.upstreams)
 
     if err then
-        pdk.log.error("sync_update_upstream_data: get upstream list FAIL [".. err .."]")
+        pdk.log.error("get upstream list FAIL [".. err .."]")
         return nil
     end
 
     if not upstream_list or not upstream_list.list or (#upstream_list.list == 0) then
-        pdk.log.error("sync_update_upstream_data: upstream list null ["
+        pdk.log.error("upstream list null ["
                               .. pdk.json.encode(upstream_list, true) .. "]")
         return nil
     end
@@ -40,7 +41,7 @@ function _M.sync_update_upstream_data()
     local node_list, err = dao.common.list_keys(dao.common.PREFIX_MAP.upstream_nodes)
 
     if err then
-        pdk.log.error("sync_update_upstream_data: get upstream node list FAIL [".. err .."]")
+        pdk.log.error("get upstream node list FAIL [".. err .."]")
         return nil
     end
 
@@ -57,7 +58,7 @@ function _M.sync_update_upstream_data()
                 local _, err = pdk.schema.check(schema.upstream_node.upstream_node_data, node_list.list[i])
 
                 if err then
-                    pdk.log.error("sync_update_upstream_data: upstream node schema check err:[" .. err .. "]["
+                    pdk.log.error("upstream node schema check err:[" .. err .. "]["
                                           .. pdk.json.encode(node_list.list[i], true) .. "]")
                     break
                 end
@@ -67,7 +68,7 @@ function _M.sync_update_upstream_data()
                 end
 
                 if not node_list.list[i].name then
-                    pdk.log.warn("sync_update_upstream_data: upstream node missing name, skip")
+                    pdk.log.warn("upstream node missing name, skip")
                     break
                 end
 
@@ -100,7 +101,7 @@ function _M.sync_update_upstream_data()
             local _, err = pdk.schema.check(schema.upstream.upstream_data, upstream_list.list[j])
 
             if err then
-                pdk.log.error("sync_update_upstream_data: upstream schema check err:[" .. err .. "]["
+                pdk.log.error("upstream schema check err:[" .. err .. "]["
                                       .. pdk.json.encode(upstream_list.list[j], true) .. "]")
                 break
             end
@@ -116,14 +117,14 @@ function _M.sync_update_upstream_data()
                 repeat
                     local node_key = upstream_list.list[j].nodes[k].name
                     if not node_key then
-                        pdk.log.warn("sync_update_upstream_data: upstream node reference missing name, skip")
+                        pdk.log.warn("upstream node reference missing name, skip")
                         break
                     end
 
                     local node = node_map_by_name[node_key]
 
                     if not node then
-                        pdk.log.warn("sync_update_upstream_data: upstream node not found: [" .. tostring(node_key) .. "]")
+                        pdk.log.warn("upstream node not found: [" .. tostring(node_key) .. "]")
                         break
                     end
 
@@ -133,7 +134,7 @@ function _M.sync_update_upstream_data()
             end
 
             if #upstream_nodes == 0 then
-                pdk.log.error("sync_update_upstream_data: the upstream node does not match the data: ["
+                pdk.log.error("the upstream node does not match the data: ["
                                       .. pdk.json.encode(upstream_list.list[j], true) .. "]")
                 break
             end
@@ -314,6 +315,11 @@ local function worker_event_upstream_handler_register()
 
         renew_upstream_balancer_object(new_upstream_object)
         
+        current_upstream_data = {}
+        for i = 1, #data do
+            current_upstream_data[data[i].name] = data[i]
+        end
+        
         -- 更新健康检测器
         healthcheck_module.sync_update_checkers(data)
 
@@ -340,7 +346,7 @@ function _M.init_resolver()
     }
 
     if err then
-        pdk.log.error("init resolver error: [" .. tostring(err) .. "]")
+        pdk.log.error("init resolver err: [" .. tostring(err) .. "]")
         return
     end
 
@@ -350,7 +356,7 @@ end
 function _M.check_replenish_upstream(ok_ctx)
 
     if not ok_ctx.config or not ok_ctx.config.service_router or not ok_ctx.config.service_router.router then
-        pdk.log.error("check_replenish_upstream: ok_ctx data format error: ["
+        pdk.log.error("ok_ctx data format err: ["
                               .. pdk.json.encode(ok_ctx, true) .. "]")
         return
     end
@@ -379,7 +385,7 @@ function _M.check_replenish_upstream(ok_ctx)
     local answers, err = resolver_client:query(ok_ctx.matched.host, nil, {})
 
     if err then
-        pdk.log.error("failed to query the DNS server: [" .. pdk.json.encode(err, true) .. "]")
+        pdk.log.error("failed to query DNS server, err: [" .. pdk.json.encode(err, true) .. "]")
         return
     end
 
@@ -411,7 +417,7 @@ function _M.gogogo(ok_ctx)
     if not ok_ctx.config or not ok_ctx.config.service_router or not ok_ctx.config.service_router.router or
             not ok_ctx.config.service_router.router.upstream or
             not next(ok_ctx.config.service_router.router.upstream) then
-        pdk.log.error("[sys.balancer.gogogo] ok_ctx.config.service_router.router.upstream is null!")
+        pdk.log.error("ok_ctx.config.service_router.router.upstream is null")
         return
     end
 
@@ -430,7 +436,7 @@ function _M.gogogo(ok_ctx)
         local upstream_object = upstream_objects[upstream.name]
 
         if not upstream_object then
-            pdk.log.error("[sys.balancer.gogogo] upstream undefined, upstream_object is null!")
+            pdk.log.error("upstream undefined, upstream_object is null")
             return
         end
 
@@ -505,7 +511,7 @@ function _M.gogogo(ok_ctx)
             end
 
             if not address_port then
-                pdk.log.error("[sys.balancer.gogogo] upstream undefined, upstream_object find null!")
+                pdk.log.error("upstream undefined, upstream_object find null")
                 return
             end
 
@@ -521,7 +527,7 @@ function _M.gogogo(ok_ctx)
                     -- 节点不健康，从负载均衡器中移除并重试
                     retry_count = retry_count + 1
                     if retry_count >= max_retries then
-                        pdk.log.error("[sys.balancer.gogogo] no healthy upstream nodes available after " .. max_retries .. " retries")
+                        pdk.log.error("no healthy upstream nodes available after " .. max_retries .. " retries")
                         return
                     end
                     -- 从负载均衡器中临时移除不健康的节点
@@ -538,7 +544,7 @@ function _M.gogogo(ok_ctx)
         local address_port_table = pdk.string.split(address_port, "|")
 
         if #address_port_table ~= 2 then
-            pdk.log.error("[sys.balancer.gogogo] address port format error: ["
+            pdk.log.error("address port format err: ["
                                   .. pdk.json.encode(address_port_table, true) .. "]")
             return
         end
@@ -549,7 +555,7 @@ function _M.gogogo(ok_ctx)
     else
 
         if not upstream.address or not upstream.port then
-            pdk.log.error("[sys.balancer.gogogo] upstream address and port undefined")
+            pdk.log.error("upstream address and port undefined")
             return
         end
 
@@ -559,7 +565,7 @@ function _M.gogogo(ok_ctx)
     end
 
     if not address or not port or (address == ngx.null) or (port == ngx.null) then
-        pdk.log.error("[sys.balancer.gogogo] address or port is null ["
+        pdk.log.error("address or port is null ["
                               .. pdk.json.encode(address, true) .. "]["
                               ..  pdk.json.encode(port, true) .. "]")
         return
@@ -568,14 +574,14 @@ function _M.gogogo(ok_ctx)
     local _, err = pdk.schema.check(schema.upstream_node.schema_ip, address)
 
     if err then
-        pdk.log.error("[sys.balancer.gogogo] address schema check err:[" .. address .. "][" .. err .. "]")
+        pdk.log.error("address schema check err:[" .. address .. "][" .. err .. "]")
         return
     end
 
     local _, err = pdk.schema.check(schema.upstream_node.schema_port, port)
 
     if err then
-        pdk.log.error("[sys.balancer.gogogo] port schema check err:[" .. port .. "][" .. err .. "]")
+        pdk.log.error("port schema check err:[" .. port .. "][" .. err .. "]")
         return
     end
 
@@ -583,16 +589,24 @@ function _M.gogogo(ok_ctx)
             timeout.connect_timeout / 1000, timeout.write_timeout / 1000, timeout.read_timeout / 1000)
 
     if not ok then
-        pdk.log.error("[sys.balancer] could not set upstream timeouts: [" .. pdk.json.encode(err, true) .. "]")
+        pdk.log.error("could not set upstream timeouts, err: [" .. pdk.json.encode(err, true) .. "]")
         return
     end
 
     local ok, err = balancer.set_current_peer(address, port)
 
     if not ok then
-        pdk.log.error("[sys.balancer] failed to set the current peer: ", err)
+        pdk.log.error("failed to set the current peer, err: [" .. tostring(err) .. "]")
         return
     end
+end
+
+function _M.get_upstream_info()
+    local upstreams_list = {}
+    for _, upstream in pairs(current_upstream_data) do
+        table.insert(upstreams_list, upstream)
+    end
+    return upstreams_list
 end
 
 return _M

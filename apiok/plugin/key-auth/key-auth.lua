@@ -29,11 +29,13 @@ function _M.http_access(ok_ctx, plugin_config)
 
     if not header_key then
         pdk.response.exit(
-                401, { message = "[key-auth] Authorization FAIL, header \"APIOK-KEY-AUTH\" is required" })
+                401, { message = "[key-auth] Authorization FAIL, header \"APIOK-KEY-AUTH\" is required" }, nil, 
+                "[key-auth] Authorization FAIL, header \"APIOK-KEY-AUTH\" is required", "key-auth")
     end
 
     if header_key ~= plugin_config.secret then
-        pdk.response.exit(401, { message = "[key-auth] Authorization FAIL" })
+        pdk.response.exit(401, { message = "[key-auth] Authorization FAIL" }, nil, 
+                "[key-auth] Authorization FAIL", "key-auth")
     end
 
 end

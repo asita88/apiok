@@ -5,11 +5,14 @@ local events      = require("resty.worker.events")
 local ngx_process = require("ngx.process")
 
 local plugin_objects = {}
+local global_plugin_objects = {}
 
 local _M = {}
 
 _M.events_source_plugin   = "events_source_plugin"
 _M.events_type_put_plugin = "events_type_put_plugin"
+_M.events_source_global_plugin   = "events_source_global_plugin"
+_M.events_type_put_global_plugin = "events_type_put_global_plugin"
 
 local function plugins_handler_map_name()
 
@@ -70,6 +73,7 @@ function _M.sync_update_plugin_data()
             local plugin_key = list.list[i].key
 
             if not plugins_name_handler_map[plugin_key] then
+                pdk.log.warn("plugins_list: plugin handler not found, plugin: " .. tostring(list.list[i].name) .. ", key: " .. tostring(plugin_key))
                 break
             end
 
@@ -87,7 +91,7 @@ function _M.sync_update_plugin_data()
 
             pdk.table.insert(plugins_data_list, {
                 name    = list.list[i].name,
-                key     = list.list[i].key,
+                key     = plugin_key,
                 config  = list.list[i].config,
             })
 
@@ -100,6 +104,72 @@ function _M.sync_update_plugin_data()
     end
 
     return plugins_data_list
+end
+
+function _M.sync_update_global_plugin_data()
+
+    local plugins_name_handler_map = plugins_handler_map_name()
+
+    if not plugins_name_handler_map then
+        pdk.log.error("global_plugins_list: valid plugins are empty!")
+        return nil
+    end
+
+    local list, err = dao.common.list_keys(dao.common.PREFIX_MAP.global_plugins)
+
+    if err then
+        pdk.log.error("global_plugins_list: get global plugin list FAIL [".. err .."]")
+        return nil
+    end
+
+    if not list or not list.list or (#list.list == 0) then
+        pdk.log.info("global_plugins_list: global plugin list null!")
+        return {}
+    end
+
+    local global_plugins_data_list = {}
+
+    for i = 1, #list.list do
+
+        repeat
+            local _, err = pdk.schema.check(schema.plugin.plugin_data, list.list[i])
+
+            if err then
+                pdk.log.error("global_plugins_list: global plugin schema check err:[" .. err .. "]["
+                                      .. pdk.json.encode(list.list[i], true) .. "]")
+                break
+            end
+
+            local plugin_key = list.list[i].key
+
+            if not plugins_name_handler_map[plugin_key] then
+                pdk.log.warn("global_plugins_list: plugin handler not found, plugin: " .. tostring(list.list[i].name) .. ", key: " .. tostring(plugin_key))
+                break
+            end
+
+            local plugin_object = require("apiok.plugin." .. plugin_key .. "." .. plugin_key)
+
+            if plugin_object.schema_config then
+                local err = plugin_object.schema_config(list.list[i].config)
+
+                if err then
+                    pdk.log.error("global_plugins_list: global plugin config schema check err:[" .. err .. "]["
+                                          .. pdk.json.encode(list.list[i], true) .. "]")
+                    break
+                end
+            end
+
+            pdk.table.insert(global_plugins_data_list, {
+                name    = list.list[i].name,
+                key     = plugin_key,
+                config  = list.list[i].config,
+            })
+
+        until true
+
+    end
+
+    return global_plugins_data_list
 end
 
 local function worker_event_plugin_handler_register()
@@ -136,15 +206,58 @@ local function worker_event_plugin_handler_register()
 
 end
 
+local function worker_event_global_plugin_handler_register()
+
+    local global_plugin_handler = function(data, event, source)
+
+        if source ~= _M.events_source_global_plugin then
+            return
+        end
+
+        if event ~= _M.events_type_put_global_plugin then
+            return
+        end
+
+        if (type(data) ~= "table") then
+            return
+        end
+
+        local plugins_name_handler_map = plugins_handler_map_name()
+
+        global_plugin_objects = {}
+
+        for i = 1, #data do
+            global_plugin_objects[data[i].name] = {
+                key     = data[i].key,
+                config  = data[i].config,
+                handler = plugins_name_handler_map[data[i].key],
+            }
+        end
+
+    end
+
+    if ngx_process.type() ~= "privileged agent" then
+        events.register(global_plugin_handler, _M.events_source_global_plugin, _M.events_type_put_global_plugin)
+    end
+
+end
+
 function _M.init_worker()
 
     worker_event_plugin_handler_register()
+    worker_event_global_plugin_handler_register()
 
 end
 
 function _M.plugin_subjects()
 
     return plugin_objects
+
+end
+
+function _M.global_plugin_subjects()
+
+    return global_plugin_objects
 
 end
 
