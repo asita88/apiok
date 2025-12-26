@@ -2,7 +2,7 @@
 
 # APIOK 日志轮转安装脚本
 
-LOGS_DIR="/usr/local/apiok/logs"
+LOGS_DIR="/opt/apiok/apiok/logs"
 PID_FILE="$LOGS_DIR/nginx.pid"
 ACCESS_LOG="$LOGS_DIR/access.log"
 ERROR_LOG="$LOGS_DIR/error.log"

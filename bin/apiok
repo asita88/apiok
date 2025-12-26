@@ -1,7 +1,7 @@
 #!/usr/bin/env resty
 
-package.path = "/usr/local/apiok/resty/?.lua;/usr/local/apiok/?.lua;" .. package.path
-package.cpath = "/usr/local/apiok/resty/?.so;" .. package.cpath
+package.path = "/opt/apiok/apiok/resty/?.lua;/opt/apiok/apiok/?.lua;" .. package.path
+package.cpath = "/opt/apiok/apiok/resty/?.so;" .. package.cpath
 
 require("apiok.cmd.utils.common")
 

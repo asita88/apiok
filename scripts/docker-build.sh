@@ -32,18 +32,18 @@ make install || {
 echo "[4/4] 打包并复制到输出目录..."
 OUTPUT_DIR=${OUTPUT_DIR:-/output/apiok}
 mkdir -p ${OUTPUT_DIR}
-if [ ! -d "/usr/local/apiok" ]; then
-    echo "错误: APIOK 安装目录不存在: /usr/local/apiok"
+if [ ! -d "/opt/apiok/apiok" ]; then
+    echo "错误: APIOK 安装目录不存在: /opt/apiok/apiok"
     exit 1
 fi
-if [ ! -d "/usr/local/openresty" ]; then
-    echo "错误: OpenResty 安装目录不存在: /usr/local/openresty"
+if [ ! -d "/opt/apiok/openresty" ]; then
+    echo "错误: OpenResty 安装目录不存在: /opt/apiok/openresty"
     exit 1
 fi
 echo "复制 APIOK..."
-cp -a /usr/local/apiok ${OUTPUT_DIR}/
+cp -a /opt/apiok/apiok ${OUTPUT_DIR}/
 echo "复制 OpenResty..."
-cp -a /usr/local/openresty ${OUTPUT_DIR}/
+cp -a /opt/apiok/openresty ${OUTPUT_DIR}/
 echo "构建产物已复制到: ${OUTPUT_DIR}"
 
 echo ""

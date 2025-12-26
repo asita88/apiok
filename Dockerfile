@@ -11,11 +11,12 @@ COPY conf /build/conf
 COPY resty /build/resty
 
 RUN chmod +x /build/scripts/*.sh
-RUN make OPENRESTY_VERSION=1.21.4.1 OPENRESTY_PREFIX=/usr/local/openresty build
+RUN make OPENRESTY_VERSION=1.21.4.1 OPENRESTY_PREFIX=/opt/apiok/openresty build
 RUN make deps && make install
 
-WORKDIR /build
+RUN rm -rf /build/*
+WORKDIR /opt/apiok
 
 EXPOSE 80 443 8080
 
-CMD ["/usr/local/openresty/nginx/sbin/nginx", "-p", "/usr/local/apiok", "-c", "/usr/local/apiok/conf/nginx.conf", "-g", "daemon off;"]
+CMD ["/opt/apiok/openresty/nginx/sbin/nginx", "-p", "/opt/apiok/apiok", "-c", "/opt/apiok/apiok/conf/nginx.conf", "-g", "daemon off;"]

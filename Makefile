@@ -5,11 +5,11 @@ COPY             ?= cp -rf
 CHMOD            ?= chmod -R
 DOWNLOAD         ?= wget
 UNTAG            ?= tar -zxvf
-INST_OK_PRODIR  ?= /usr/local/apiok
+INST_OK_PRODIR  ?= /opt/apiok/apiok
 INST_OK_BINDIR  ?= /usr/bin
 # OpenResty 相关变量
 OPENRESTY_VERSION ?= 1.21.4.1
-OPENRESTY_PREFIX ?= /usr/local/openresty
+OPENRESTY_PREFIX ?= /opt/apiok/openresty
 
 # 默认目标：执行完整的构建和安装流程
 .PHONY: all
@@ -82,7 +82,16 @@ install:
 	$(INSTALL) -d $(INST_OK_PRODIR)/apiok/plugin/limit-conn
 	$(INSTALL) -d $(INST_OK_PRODIR)/apiok/plugin/limit-count
 	$(INSTALL) -d $(INST_OK_PRODIR)/apiok/plugin/limit-req
+	$(INSTALL) -d $(INST_OK_PRODIR)/apiok/plugin/log-es
+	$(INSTALL) -d $(INST_OK_PRODIR)/apiok/plugin/log-http
+	$(INSTALL) -d $(INST_OK_PRODIR)/apiok/plugin/log-kafka
+	$(INSTALL) -d $(INST_OK_PRODIR)/apiok/plugin/log-mysql
 	$(INSTALL) -d $(INST_OK_PRODIR)/apiok/plugin/mock
+	$(INSTALL) -d $(INST_OK_PRODIR)/apiok/plugin/prometheus
+	$(INSTALL) -d $(INST_OK_PRODIR)/apiok/plugin/request-rewrite
+	$(INSTALL) -d $(INST_OK_PRODIR)/apiok/plugin/response-rewrite
+	$(INSTALL) -d $(INST_OK_PRODIR)/apiok/plugin/traffic-tag
+	$(INSTALL) -d $(INST_OK_PRODIR)/apiok/plugin/waf
 	$(INSTALL) -d $(INST_OK_PRODIR)/apiok/sys
 	$(INSTALL) -d $(INST_OK_PRODIR)/bin
 	$(INSTALL) -d $(INST_OK_PRODIR)/conf
@@ -105,7 +114,16 @@ install:
 	$(INSTALL) apiok/plugin/limit-conn/*.lua  $(INST_OK_PRODIR)/apiok/plugin/limit-conn/
 	$(INSTALL) apiok/plugin/limit-count/*.lua $(INST_OK_PRODIR)/apiok/plugin/limit-count/
 	$(INSTALL) apiok/plugin/limit-req/*.lua   $(INST_OK_PRODIR)/apiok/plugin/limit-req/
+	$(INSTALL) apiok/plugin/log-es/*.lua 	   $(INST_OK_PRODIR)/apiok/plugin/log-es/
+	$(INSTALL) apiok/plugin/log-http/*.lua 	   $(INST_OK_PRODIR)/apiok/plugin/log-http/
+	$(INSTALL) apiok/plugin/log-kafka/*.lua   $(INST_OK_PRODIR)/apiok/plugin/log-kafka/
+	$(INSTALL) apiok/plugin/log-mysql/*.lua   $(INST_OK_PRODIR)/apiok/plugin/log-mysql/
 	$(INSTALL) apiok/plugin/mock/*.lua 	   $(INST_OK_PRODIR)/apiok/plugin/mock/
+	$(INSTALL) apiok/plugin/prometheus/*.lua   $(INST_OK_PRODIR)/apiok/plugin/prometheus/
+	$(INSTALL) apiok/plugin/request-rewrite/*.lua $(INST_OK_PRODIR)/apiok/plugin/request-rewrite/
+	$(INSTALL) apiok/plugin/response-rewrite/*.lua $(INST_OK_PRODIR)/apiok/plugin/response-rewrite/
+	$(INSTALL) apiok/plugin/traffic-tag/*.lua  $(INST_OK_PRODIR)/apiok/plugin/traffic-tag/
+	$(INSTALL) apiok/plugin/waf/*.lua 	   $(INST_OK_PRODIR)/apiok/plugin/waf/
 	$(INSTALL) apiok/sys/*.lua    			   $(INST_OK_PRODIR)/apiok/sys/
 
 	$(INSTALL) bin/apiok $(INST_OK_PRODIR)/bin/apiok

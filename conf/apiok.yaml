@@ -36,8 +36,6 @@ plugins:
   - limit-req
   - limit-conn
   - limit-count
-  - ip-blacklist
-  - ip-whitelist
   - log-http
   - log-kafka
   - log-mysql

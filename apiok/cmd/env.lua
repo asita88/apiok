@@ -169,13 +169,23 @@ local function validate_plugin()
         local _, err = io_open(file_path, "r")
 
         if err then
-            table.insert(err_plugins, plugins[i])
+            table.insert(err_plugins, {
+                name = plugins[i],
+                path = file_path,
+                error = err
+            })
         end
 
     end
 
     if next(err_plugins) then
-        print("Plugin Check           ...FAIL (Plugin not found: " .. table.concat(err_plugins, ', ') .. ")")
+        print("Plugin Check           ...FAIL")
+        for i = 1, #err_plugins do
+            local plugin_err = err_plugins[i]
+            print("  Plugin: " .. plugin_err.name)
+            print("  Path: " .. plugin_err.path)
+            print("  Error: " .. plugin_err.error)
+        end
         os.exit(1)
     else
         print("Plugin Check           ...OK")

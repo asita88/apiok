@@ -3,7 +3,7 @@ set -e
 
 # OpenResty 版本和安装目录（可通过环境变量覆盖）
 OPENRESTY_VERSION=${OPENRESTY_VERSION:-1.21.4.1}
-OPENRESTY_PREFIX=${OPENRESTY_PREFIX:-/usr/local/openresty}
+OPENRESTY_PREFIX=${OPENRESTY_PREFIX:-/opt/apiok/openresty}
 
 # 设置环境变量（无论是否安装都需要）
 export PATH=${OPENRESTY_PREFIX}/bin:${OPENRESTY_PREFIX}/nginx/sbin:${OPENRESTY_PREFIX}/luajit/bin:$PATH

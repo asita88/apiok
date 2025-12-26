@@ -11,6 +11,7 @@ resty/share/
 
 # 日志文件
 logs/*.log
+logs/*.pid
 *.log
 
 # 临时文件

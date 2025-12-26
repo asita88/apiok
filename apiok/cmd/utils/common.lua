@@ -13,13 +13,13 @@ end
 
 local apiok_home
 if script_path:sub(1, 4) == '/usr' or script_path:sub(1, 4) == '/bin' or script_path:sub(1, 4) == '/opt' then
-    apiok_home = "/usr/local/apiok"
-    package.cpath = "/usr/local/apiok/deps/lib64/lua/5.1/?.so;"
-            .. "/usr/local/apiok/deps/lib/lua/5.1/?.so;"
+    apiok_home = "/opt/apiok/apiok"
+    package.cpath = "/opt/apiok/apiok/deps/lib64/lua/5.1/?.so;"
+            .. "/opt/apiok/apiok/deps/lib/lua/5.1/?.so;"
             .. package.cpath
 
-    package.path = "/usr/local/apiok/deps/share/lua/5.1/apiok/lua/?.lua;"
-            .. "/usr/local/apiok/deps/share/lua/5.1/?.lua;"
+    package.path = "/opt/apiok/apiok/deps/share/lua/5.1/apiok/lua/?.lua;"
+            .. "/opt/apiok/apiok/deps/share/lua/5.1/?.lua;"
             .. "/usr/share/lua/5.1/apiok/lua/?.lua;"
             .. "/usr/local/share/lua/5.1/apiok/lua/?.lua;"
             .. package.path
