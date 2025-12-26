@@ -11,7 +11,7 @@ COPY conf /build/conf
 COPY resty /build/resty
 
 RUN chmod +x /build/scripts/*.sh
-RUN make OPENRESTY_VERSION=1.21.4.1 OPENRESTY_PREFIX=/opt/apiok/openresty build
+RUN make OPENRESTY_VERSION=1.25.3.2 OPENRESTY_PREFIX=/opt/apiok/openresty build
 RUN make deps && make install
 
 RUN rm -rf /build/*

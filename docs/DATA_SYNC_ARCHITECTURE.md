@@ -8,7 +8,7 @@ APIOK API Gateway 采用基于 Hash 变化检测的定时轮询机制，实现�
 
 ### OpenResty 版本
 - **Privileged Agent 功能**：需要 OpenResty 1.9.3+ 版本支持
-- **项目要求**：OpenResty 1.21.4.1+（推荐）
+- **项目要求**：OpenResty 1.25.3.2+（推荐）
 - **说明**：`ngx.process.enable_privileged_agent()` API 在 OpenResty 1.9.3 版本中引入
 
 ### 相关 API

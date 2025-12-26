@@ -17,7 +17,7 @@
 ## 系统要求
 
 - Linux/Unix 系统
-- OpenResty 1.21.4.1+
+- OpenResty 1.25.3.2+
 - MySQL 5.7+ 或 Consul
 - GCC 编译环境
 

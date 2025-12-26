@@ -8,7 +8,7 @@ UNTAG            ?= tar -zxvf
 INST_OK_PRODIR  ?= /opt/apiok/apiok
 INST_OK_BINDIR  ?= /usr/bin
 # OpenResty 相关变量
-OPENRESTY_VERSION ?= 1.21.4.1
+OPENRESTY_VERSION ?= 1.25.3.2
 OPENRESTY_PREFIX ?= /opt/apiok/openresty
 
 # 默认目标：执行完整的构建和安装流程

@@ -1,6 +1,6 @@
 local config = require("apiok.sys.config")
 local resty_consul = require('resty.consul')
-local pdk = require("apiok.pdk")
+local json = require("apiok.pdk.json")
 
 local _M = {
     _VERSION = '0.6.0',
@@ -59,7 +59,7 @@ function _M:put_key(key, value, args)
     if type(value) == "string" then
         value_str = value
     else
-        value_str = pdk.json.encode(value)
+        value_str = json.encode(value)
     end
     
     local d, err = self.instance:put_key(key, value_str, args)
@@ -106,7 +106,7 @@ function _M:list_keys(prefix)
         local d, get_err = self:get_key(keys.body[i])
         
         if get_err == nil and d then
-            local decoded = pdk.json.decode(d)
+            local decoded = json.decode(d)
             if decoded then
                 table.insert(res, decoded)
             end
@@ -120,11 +120,11 @@ function _M:txn(payload)
     local res, err = self.instance:txn(payload)
     
     if err then
-        return nil, "exec txn error, payload:[" .. pdk.json.encode(payload) .. "], err:[" .. tostring(err) .. "]"
+        return nil, "exec txn error, payload:[" .. json.encode(payload) .. "], err:[" .. tostring(err) .. "]"
     end
     
     if not res then
-        return nil, "exec txn error, payload:[" .. pdk.json.encode(payload) .. "]"
+        return nil, "exec txn error, payload:[" .. json.encode(payload) .. "]"
     end
     
     local ret = {}
