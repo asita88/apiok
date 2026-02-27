@@ -81,7 +81,7 @@ jobs:
           host: ${{ vars.DEPLOY_HOST }}
           username: ${{ vars.DEPLOY_USER }}
           key: ${{ secrets.DEPLOY_SSH_KEY }}
-          source: "apiok.tar.gz"
+          source: "release/apiok-*.tar.gz"
           target: "/tmp"
 
       - name: Extract and restart
@@ -91,5 +91,11 @@ jobs:
           username: ${{ vars.DEPLOY_USER }}
           key: ${{ secrets.DEPLOY_SSH_KEY }}
           script: |
-            mkdir -p /opt/apiok
-            tar -xzf /tmp/apiok.tar.gz -C /opt/apiok      
+            mkdir -p /opt/apiok_releases
+            ARCHIVE=$(ls /tmp/apiok-*.tar.gz)
+            VERSION=$(basename "$ARCHIVE" .tar.gz | sed 's/apiok-//')
+            mkdir -p /opt/apiok_releases/$VERSION
+            tar -xzf "$ARCHIVE" -C /opt/apiok_releases/$VERSION
+            rm -rf /opt/apiok
+            ln -sf /opt/apiok_releases/$VERSION /opt/apiok
+            /opt/apiok/openresty/nginx/sbin/nginx -s reload -p /opt/apiok/apiok -c /opt/apiok/apiok/conf/nginx.conf 2>/dev/null || true      
