@@ -96,11 +96,7 @@ jobs:
           username: ${{ vars.DEPLOY_USER }}
           key: ${{ secrets.DEPLOY_SSH_KEY }}
           script: |
-            mkdir -p /opt/apiok_releases
+            mkdir -p /opt/apiok
             ARTIFACT_NAME='${{ needs.build.outputs.artifact_name }}'
-            VERSION=$(basename "$ARTIFACT_NAME" .tar.gz | sed 's/apiok-//')
-            mkdir -p /opt/apiok_releases/$VERSION
-            tar -xzf /tmp/"$ARTIFACT_NAME" -C /opt/apiok_releases/$VERSION
-            rm -rf /opt/apiok
-            ln -sf /opt/apiok_releases/$VERSION /opt/apiok
+            tar -xzf /tmp/"$ARTIFACT_NAME" -C /opt/apiok
             /opt/apiok/openresty/nginx/sbin/nginx -s reload -p /opt/apiok/apiok -c /opt/apiok/apiok/conf/nginx.conf 2>/dev/null || true      
