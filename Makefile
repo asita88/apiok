@@ -179,41 +179,8 @@ uninstall:
 		echo "✓ logrotate 配置已删除"; \
 	fi
 
-# 打包相关变量
-VERSION ?= $(shell date +%Y%m%d)
-ARCH ?= $(shell uname -m)
-BUILD_DIR ?= ./build
-
-.PHONY: package
-package:
-	@echo "开始打包 APIOK（包含 OpenResty）..."
-	@mkdir -p $(BUILD_DIR)
-	@if [ ! -d "$(INST_OK_PRODIR)" ]; then \
-		echo "错误: APIOK 安装目录不存在: $(INST_OK_PRODIR)"; \
-		echo "请先运行 make install"; \
-		exit 1; \
-	fi
-	@if [ ! -d "$(OPENRESTY_PREFIX)" ]; then \
-		echo "错误: OpenResty 安装目录不存在: $(OPENRESTY_PREFIX)"; \
-		exit 1; \
-	fi
-	@echo "创建压缩包..."
-	@cd $(BUILD_DIR) && \
-		mkdir -p apiok-package && \
-		cp -a $(INST_OK_PRODIR) apiok-package/apiok && \
-		cp -a $(OPENRESTY_PREFIX) apiok-package/openresty && \
-		tar -czf apiok-$(VERSION)-$(ARCH).tar.gz apiok-package/ && \
-		rm -rf apiok-package
-	@echo "打包完成: $(BUILD_DIR)/apiok-$(VERSION)-$(ARCH).tar.gz"
-
-# Docker 构建输出目录（可通过 OUTPUT_DIR 变量指定）
-OUTPUT_DIR ?= /output/apiok
-
-
 .PHONY: clean
 clean:
-	@echo "清理构建文件..."
-	@$(REMOVE) $(BUILD_DIR)
 	@echo "清理安装目录..."
 	@if [ -d "$(INST_OK_PRODIR)" ]; then \
 		echo "删除 APIOK 安装目录: $(INST_OK_PRODIR)"; \
