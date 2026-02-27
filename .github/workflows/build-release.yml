@@ -81,7 +81,7 @@ jobs:
           host: ${{ vars.DEPLOY_HOST }}
           username: ${{ vars.DEPLOY_USER }}
           key: ${{ secrets.DEPLOY_SSH_KEY }}
-          source: "release/apiok-*.tar.gz"
+          source: "apiok-*.tar.gz"
           target: "/tmp"
 
       - name: Extract and restart
