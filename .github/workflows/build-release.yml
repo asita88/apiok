@@ -8,13 +8,16 @@ on:
       - 'v*'
   workflow_dispatch:
 
+env:
+  APP_NAME: opseasy
 jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
       contents: write
     outputs:
-      artifact_name: ${{ steps.package.outputs.artifact_name }}
+      version: ${{ steps.version.outputs.version }}
+      artifact_name: ${{ steps.version.outputs.artifact_name }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -39,34 +42,50 @@ jobs:
       - name: Install APIOK
         run: sudo make SKIP_SYSTEM_BIN=1 install
 
-      - name: Package
-        id: package
+      - name: Set version
+        id: version
+        run: |
+          if [[ "${{ github.ref }}" == refs/tags/* ]]; then
+            VERSION="${{ github.ref_name }}"
+          else
+            VERSION="dev-${{ github.run_number }}-$(echo ${{ github.sha }} | cut -c1-7)"
+          fi
+          BRANCH=$(echo '${{ github.ref_name }}' | sed 's/\//-/g')
+          DATE=$(date +%Y%m%d)
+          ARTIFACT_NAME=${{ env.APP_NAME }}-${BRANCH}-${DATE}.tar.gz
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "artifact_name=$ARTIFACT_NAME" >> $GITHUB_OUTPUT
+
+
+      - name: Create release archive
         run: |
           mkdir -p release
-          VERSION=$(date +%Y%m%d)
-          BRANCH=$(echo '${{ github.ref_name }}' | sed 's/\//-/g')
-          ARTIFACT_NAME=apiok-${BRANCH}-${VERSION}.tar.gz
-          sudo tar -czf release/${ARTIFACT_NAME} -C /opt/apiok apiok openresty
-          sudo chown $(id -u):$(id -g) release/${ARTIFACT_NAME}
-          echo "artifact_name=${ARTIFACT_NAME}" >> $GITHUB_OUTPUT
+
+          sudo tar -czf release/${{ steps.version.outputs.artifact_name }} -C /opt/apiok apiok openresty
+
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: apiok-release
-          path: release/${{ steps.package.outputs.artifact_name }}
+          name: ${{ env.APP_NAME }}-release
+          path: release/${{ steps.version.outputs.artifact_name }}
           retention-days: 30
 
       - name: Create Release
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
-          files: release/${{ steps.package.outputs.artifact_name }}
+          files: release/${{ steps.version.outputs.artifact_name }}
           tag_name: ${{ github.ref_name }}
-          name: APIOK ${{ github.ref_name }}
+          name: ${{ env.APP_NAME }} ${{ github.ref_name }}
           body: |
-            ## APIOK ${{ github.ref_name }}
+            ## ${{ env.APP_NAME }} ${{ github.ref_name }}
+
+            ### 构建信息
             - Commit: ${{ github.sha }}
+
+            ### 下载
+            - Linux AMD64: `${{ env.APP_NAME }}.tar.gz`
           token: ${{ secrets.GITHUB_TOKEN }}
 
   deploy:
@@ -78,7 +97,7 @@ jobs:
       - name: Download artifacts
         uses: actions/download-artifact@v4
         with:
-          name: apiok-release
+          name: ${{ env.APP_NAME }}-release
 
       - name: Deploy to server
         uses: appleboy/scp-action@v0.1.7
@@ -96,7 +115,7 @@ jobs:
           username: ${{ vars.DEPLOY_USER }}
           key: ${{ secrets.DEPLOY_SSH_KEY }}
           script: |
-            mkdir -p /opt/apiok
+            mkdir -p /opt/${{ env.APP_NAME }}
             ARTIFACT_NAME='${{ needs.build.outputs.artifact_name }}'
-            tar -xzf /tmp/"$ARTIFACT_NAME" -C /opt/apiok
+            tar -xzf /tmp/"$ARTIFACT_NAME" -C /opt/${{ env.APP_NAME }}
             /opt/apiok/openresty/nginx/sbin/nginx -s reload -p /opt/apiok/apiok -c /opt/apiok/apiok/conf/nginx.conf 2>/dev/null || true      
