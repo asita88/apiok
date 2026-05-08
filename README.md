@@ -205,7 +205,7 @@ return _M
 
 ```bash
 # 构建镜像
-docker build -t apiok:latest .
+docker build -f docker/Dockerfile -t apiok:latest .
 
 # 运行容器
 docker run -d -p 80:80 -p 443:443 apiok:latest

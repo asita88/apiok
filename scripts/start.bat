@@ -65,16 +65,19 @@ if "%1"=="--rebuild-base" (
     echo.
 )
 
+pushd "%~dp0\.."
+
 REM Build base image if needed
 if %BUILD_BASE%==1 (
     echo ========================================
     echo Building base image: %BASE_IMAGE_NAME%
     echo ========================================
     echo.
-    docker build -f Dockerfile.base -t %BASE_IMAGE_NAME%:latest .
+    docker build -f docker\Dockerfile.base -t %BASE_IMAGE_NAME%:latest .
     if errorlevel 1 (
         echo.
         echo ERROR: Base image build failed!
+        popd
         pause
         exit /b 1
     )
@@ -105,16 +108,19 @@ echo Building Docker image: %IMAGE_NAME%
 echo ========================================
 echo.
 
-docker build -t %IMAGE_NAME%:%VERSION% .
+docker build -f docker\Dockerfile -t %IMAGE_NAME%:%VERSION% .
 if errorlevel 1 (
     echo.
     echo ERROR: Docker build failed!
+    popd
     pause
     exit /b 1
 )
 
 REM Tag as latest
 docker tag %IMAGE_NAME%:%VERSION% %IMAGE_NAME%:latest
+
+popd
 
 echo.
 echo ========================================

@@ -96,13 +96,6 @@ if [ ! -f "${OPENRESTY_PREFIX}/bin/openresty" ]; then
     cd "${BUILD_DIR}" || cd /build || true
     rm -rf /tmp/openresty-${OPENRESTY_VERSION}* || true
     
-    # 创建符号链接
-    mkdir -p /usr/local/bin
-    ln -sf ${OPENRESTY_PREFIX}/bin/openresty /usr/local/bin/openresty || true
-    ln -sf ${OPENRESTY_PREFIX}/bin/resty /usr/local/bin/resty || true
-    
-    echo "[OpenResty] OpenResty ${OPENRESTY_VERSION} 安装完成！"
-    echo ""
 else
     echo "[OpenResty] OpenResty 已安装，跳过编译"
     echo ""

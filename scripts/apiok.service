@@ -1,0 +1,15 @@
+
+[Unit]
+Description=APIOK API Gateway
+After=network.target
+
+[Service]
+Type=simple
+User=www-data
+WorkingDirectory=/opt/apiok/apiok
+ExecStart=/usr/bin/openresty -p /opt/apiok/apiok -c /opt/apiok/apiok/conf/nginx.conf
+Restart=always
+RestartSec=5s
+
+[Install]
+WantedBy=multi-user.target
