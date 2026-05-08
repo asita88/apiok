@@ -7,7 +7,35 @@ local plugin_name = "response-rewrite"
 
 local _M = {}
 
+local function narrow_body_rewrite_value(rewrite_type, v)
+    if type(v) ~= "table" then
+        return v
+    end
+    if rewrite_type == "regex" then
+        return {
+            pattern = v.pattern,
+            replacement = v.replacement,
+            flags = v.flags,
+        }
+    elseif rewrite_type == "replace" then
+        return {
+            from = v.from,
+            to = v.to,
+        }
+    elseif rewrite_type == "prefix" or rewrite_type == "suffix" then
+        return {
+            remove = v.remove,
+            add = v.add,
+        }
+    end
+    return v
+end
+
 function _M.schema_config(config)
+    if config and config.body_rewrite and config.body_rewrite.type and config.body_rewrite.value then
+        config.body_rewrite.value = narrow_body_rewrite_value(config.body_rewrite.type, config.body_rewrite.value)
+    end
+
     local plugin_schema_err = plugin_common.plugin_config_schema(plugin_name, config)
 
     if plugin_schema_err then

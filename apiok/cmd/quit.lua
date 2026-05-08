@@ -4,8 +4,8 @@ local lapp = [[
 Usage: apiok quit
 ]]
 
-local function execute()
-    nginx_signals.quit()
+local function execute(args)
+    nginx_signals.quit(args.apiok_home)
 end
 
 return {

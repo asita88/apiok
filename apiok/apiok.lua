@@ -4,6 +4,7 @@ local pdk    = require("apiok.pdk")
 local sys    = require("apiok.sys")
 
 local function run_plugin(phase, ok_ctx)
+    pdk.log.error("run_plugin: ", phase)
     if ok_ctx == nil or ok_ctx.config == nil then
         return
     end
@@ -36,11 +37,16 @@ local function run_plugin(phase, ok_ctx)
 
     if #router_plugins > 0 then
 
+        pdk.log.error("router_plugins: ", #router_plugins)
+
+        pdk.log.error("plugin_objects: ", #plugin_objects)
+
         for i = 1, #router_plugins do
 
             repeat
 
                 if not router_plugins[i].name or not plugin_objects[router_plugins[i].name] then
+                    pdk.log.error("router_plugins[i].name: ", router_plugins[i].name)
                     break
                 end
 
@@ -49,8 +55,10 @@ local function run_plugin(phase, ok_ctx)
                 router_plugin_keys_map[router_plugin_object.key] = 0
 
                 if not router_plugin_object.handler[phase] then
+                    pdk.log.error("router_plugin_object.handler[phase] not found: ", router_plugins[i].name)
                     break
                 end
+
 
                 router_plugin_object.handler[phase](ok_ctx, router_plugin_object.config)
 
@@ -61,25 +69,33 @@ local function run_plugin(phase, ok_ctx)
 
     if #service_plugins > 0 then
 
+        pdk.log.error("service_plugins: ", #service_plugins)
+
+        pdk.log.error("plugin_objects: ", #plugin_objects)
+
         for j = 1, #service_plugins do
 
             repeat
 
                 if not service_plugins[j].name or not plugin_objects[service_plugins[j].name] then
+                    pdk.log.error("service_plugins[j].name not found: ", service_plugins[j].name)
                     break
                 end
 
                 local service_plugin_object = plugin_objects[service_plugins[j].name]
 
                 if router_plugin_keys_map[service_plugin_object.key] then
+                    pdk.log.error("service_plugin_object.key already exists: ", service_plugin_object.key)
                     break
                 end
 
                 if global_plugin_keys_map[service_plugin_object.key] then
+                    pdk.log.error("global_plugin_keys_map[service_plugin_object.key] already exists: ", global_plugin_keys_map[service_plugin_object.key])
                     break
                 end
 
                 if not service_plugin_object.handler[phase] then
+                    pdk.log.error("service_plugin_object.handler[phase] not found: ", service_plugins[j].name)
                     break
                 end
 

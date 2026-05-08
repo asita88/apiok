@@ -7,7 +7,35 @@ local plugin_name = "request-rewrite"
 
 local _M = {}
 
+local function narrow_uri_rewrite_value(rewrite_type, v)
+    if type(v) ~= "table" then
+        return v
+    end
+    if rewrite_type == "regex" then
+        return {
+            pattern = v.pattern,
+            replacement = v.replacement,
+            flags = v.flags,
+        }
+    elseif rewrite_type == "replace" then
+        return {
+            from = v.from,
+            to = v.to,
+        }
+    elseif rewrite_type == "prefix" or rewrite_type == "suffix" then
+        return {
+            remove = v.remove,
+            add = v.add,
+        }
+    end
+    return v
+end
+
 function _M.schema_config(config)
+    if config and config.uri_rewrite and config.uri_rewrite.type and config.uri_rewrite.value then
+        config.uri_rewrite.value = narrow_uri_rewrite_value(config.uri_rewrite.type, config.uri_rewrite.value)
+    end
+
     local plugin_schema_err = plugin_common.plugin_config_schema(plugin_name, config)
 
     if plugin_schema_err then
@@ -30,10 +58,15 @@ function _M.http_access(ok_ctx, plugin_config)
         return
     end
 
+    ngx.log(ngx.ERR, "plugin_config: ", ngx.var.uri)
+
     local matched = ok_ctx.matched
     if not matched or not matched.uri then
+        ngx.log(ngx.ERR, "matched or not matched.uri")
         return
     end
+
+    ngx.log(ngx.ERR, "matched.uri: ", matched.uri)
 
     local original_uri = matched.uri
     local new_uri = original_uri

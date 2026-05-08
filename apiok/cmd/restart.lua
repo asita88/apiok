@@ -5,11 +5,13 @@ local lapp = [[
 Usage: apiok restart
 ]]
 
-local function execute()
-
-    pcall(stop.execute)
-
-    pcall(start.execute)
+local function execute(args)
+    pcall(function()
+        stop.execute(args)
+    end)
+    pcall(function()
+        start.execute(args)
+    end)
 end
 
 return {

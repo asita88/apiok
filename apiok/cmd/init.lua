@@ -25,7 +25,7 @@ Usage: apiok COMMAND
 The available commands are:
  %s]], table.concat(cmds_arr, "\n ") .. "\n ")
 
-return function(args)
+return function(args, apiok_home)
     local cmd_name = table.remove(args, 1)
     if not cmd_name then
         pl_app(help)
@@ -58,6 +58,8 @@ return function(args)
     log.debug("ngx_lua: %s", ngx.config.ngx_lua_version)
     log.debug("nginx: %s", ngx.config.nginx_version)
     log.debug("Lua: %s", jit and jit.version or _VERSION)
+
+    args.apiok_home = apiok_home
 
     xpcall(function() cmd_exec(args) end, function(err)
         if not (args.v or args.vv) then

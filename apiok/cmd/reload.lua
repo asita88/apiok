@@ -4,8 +4,8 @@ local lapp = [[
 Usage: apiok reload
 ]]
 
-local function execute()
-    nginx_signals.reload()
+local function execute(args)
+    nginx_signals.reload(args.apiok_home)
 end
 
 return {

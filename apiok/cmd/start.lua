@@ -5,11 +5,11 @@ local lapp = [[
 Usage: apiok start
 ]]
 
-local function execute()
-    env.execute()
+local function execute(args)
+    env.execute(args)
     print("----------------------------")
 
-    nginx_signals.start()
+    nginx_signals.start(args.apiok_home)
 
     print("Apiok started successfully!")
 end

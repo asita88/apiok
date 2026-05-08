@@ -1,8 +1,66 @@
 #!/usr/bin/env resty
 
-package.path = "/opt/apiok/apiok/resty/?.lua;/opt/apiok/apiok/?.lua;" .. package.path
-package.cpath = "/opt/apiok/apiok/resty/?.so;" .. package.cpath
+local function trim(s)
+    return (s:gsub("^%s*(.-)%s*$", "%1"))
+end
 
-require("apiok.cmd.utils.common")
+local function dirname(p)
+    p = p:gsub("\\", "/")
+    local d = p:match("^(.*)/[^/]+$")
+    return d or "."
+end
 
-require("apiok.cmd.init")(arg)
+local function resolve_prefix()
+    local env = os.getenv("APIOK_PREFIX")
+    if env and env ~= "" then
+        local p = trim(env)
+        if p ~= "" then
+            return p
+        end
+    end
+    local a0 = arg and arg[0]
+    if not a0 or a0 == "" then
+        return ""
+    end
+    local norm = a0:gsub("\\", "/")
+    local script_path
+    if norm:sub(1, 1) == "/" or norm:match("^%a:/") then
+        script_path = norm
+    else
+        local t = io.popen("pwd 2>/dev/null")
+        if not t then
+            return ""
+        end
+        local pwd = trim(t:read("*all") or "")
+        t:close()
+        if pwd == "" then
+            return ""
+        end
+        norm = norm:gsub("^%./", "")
+        script_path = pwd .. "/" .. norm
+    end
+    local bin_dir = dirname(script_path)
+    local root = dirname(bin_dir)
+    if root ~= "." then
+        return root
+    end
+    return ""
+end
+
+local prefix = resolve_prefix()
+if not prefix or prefix == "" then
+    error("apiok: empty install prefix; set APIOK_PREFIX or invoke bin/apiok with an absolute path", 0)
+end
+
+package.path = prefix .. "/resty/?.lua;"
+        .. prefix .. "/?.lua;"
+        .. prefix .. "/deps/share/lua/5.1/apiok/lua/?.lua;"
+        .. prefix .. "/deps/share/lua/5.1/?.lua;"
+        .. package.path
+
+package.cpath = prefix .. "/resty/?.so;"
+        .. prefix .. "/deps/lib64/lua/5.1/?.so;"
+        .. prefix .. "/deps/lib/lua/5.1/?.so;"
+        .. package.cpath
+
+require("apiok.cmd.init")(arg, prefix)

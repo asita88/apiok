@@ -18,6 +18,7 @@ _M.schema = {
                     oneOf = {
                         {
                             type = "object",
+                            additionalProperties = false,
                             properties = {
                                 pattern = {
                                     type = "string",
@@ -34,6 +35,7 @@ _M.schema = {
                         },
                         {
                             type = "object",
+                            additionalProperties = false,
                             properties = {
                                 from = {
                                     type = "string",
@@ -47,6 +49,7 @@ _M.schema = {
                         },
                         {
                             type = "object",
+                            additionalProperties = false,
                             properties = {
                                 remove = {
                                     type = "string"

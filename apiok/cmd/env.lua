@@ -7,8 +7,8 @@ Usage: apiok env
 
 local config
 
-local function get_config()
-    local res, err = io.open(common.apiok_home .. "/conf/apiok.yaml", "r")
+local function get_config(apiok_home)
+    local res, err = io.open(apiok_home .. "/conf/apiok.yaml", "r")
     if not res then
         print("Config Loading         ...FAIL(" .. err ..")")
         os.exit(1)
@@ -31,8 +31,8 @@ local function get_config()
     return config_table, nil
 end
 
-local function validate_storage()
-    local res, err = get_config()
+local function validate_storage(apiok_home)
+    local res, err = get_config(apiok_home)
     
     -- 检查存储引擎配置
     local storage_conf = res.storage
@@ -156,7 +156,7 @@ local function validate_storage()
     config = res
 end
 
-local function validate_plugin()
+local function validate_plugin(apiok_home)
 
     local plugins = config.plugins
 
@@ -164,7 +164,7 @@ local function validate_plugin()
 
     for i = 1, #plugins do
 
-        local file_path = common.apiok_home .. "/apiok/plugin/" .. plugins[i] .. "/" .. plugins[i] .. ".lua"
+        local file_path = apiok_home .. "/apiok/plugin/" .. plugins[i] .. "/" .. plugins[i] .. ".lua"
 
         local _, err = io_open(file_path, "r")
 
@@ -192,7 +192,8 @@ local function validate_plugin()
     end
 end
 
-local function execute()
+local function execute(args)
+    local apiok_home = assert(args.apiok_home, "missing apiok_home")
     local nginx_path = common.trim(common.execute_cmd("which openresty"))
     if not nginx_path then
         print("OpenResty PATH         ...FAIL(OpenResty not found in system PATH)")
@@ -210,9 +211,9 @@ local function execute()
         print("OpenResty Version      ...OK")
     end
 
-    validate_storage()
+    validate_storage(apiok_home)
 
-    validate_plugin()
+    validate_plugin(apiok_home)
 end
 
 return {

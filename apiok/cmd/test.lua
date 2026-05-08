@@ -5,8 +5,8 @@ local lapp = [[
 Usage: apiok test
 ]]
 
-local function execute()
-    nginx_signals.test()
+local function execute(args)
+    nginx_signals.test(args.apiok_home)
 end
 
 return {
