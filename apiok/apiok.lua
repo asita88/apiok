@@ -2,6 +2,7 @@ local ngx    = ngx
 local pairs  = pairs
 local pdk    = require("apiok.pdk")
 local sys    = require("apiok.sys")
+local sys_rewrite_rules = require("apiok.sys.rewrite_rules")
 
 local function run_plugin(phase, ok_ctx)
     pdk.log.error("run_plugin: ", phase)
@@ -195,6 +196,8 @@ function APIOK.http_access()
     if not match_succeed then
         pdk.response.exit(404, { err_message = "\"URI\" Undefined" }, nil, "\"URI\" Undefined", "router")
     end
+
+    sys_rewrite_rules.apply_http_access(ok_ctx)
 
     -- 动态检查 client_max_body_size
     -- 优先级：路由配置 > 服务配置 > 默认值（0 = 无限制）
@@ -466,7 +469,7 @@ end
 
 function APIOK.http_header_filter()
     local ok_ctx = ngx.ctx.ok_ctx
-    
+
     -- 动态设置 chunked_transfer_encoding（响应）
     if ok_ctx and ok_ctx.chunked_transfer_encoding ~= nil then
         local chunked_encoding = ok_ctx.chunked_transfer_encoding

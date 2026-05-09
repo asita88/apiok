@@ -90,6 +90,103 @@ local proxy_set_header_config = {
     description = "Additional proxy headers to set. Key-value pairs where key is header name and value is header value. Can use Nginx variables like $host, $remote_addr, etc. Example: {'X-Custom-Header': 'value', 'X-Forwarded-Proto': '$scheme'}"
 }
 
+local rewrite_rules_proxy_rewrite = {
+    type = "object",
+    additionalProperties = true,
+    properties = {
+        uri = {
+            type = "string",
+            description = "Static target URI path"
+        },
+        regex_uri = {
+            type = "array",
+            minItems = 2,
+            maxItems = 2,
+            items = {
+                type = "string"
+            },
+            description = "[pattern, replacement] Nginx-compatible regex rewrite"
+        },
+        host = {
+            type = "string",
+            description = "Upstream Host header"
+        },
+        method = {
+            type = "string",
+            description = "HTTP method override e.g. GET POST"
+        },
+        scheme = {
+            type = "string",
+            enum = { "http", "https" },
+            description = "Forwarded proto hint via X-Forwarded-Proto"
+        },
+        headers = {
+            type = "object",
+            additionalProperties = true,
+            properties = {
+                set = {
+                    type = "object",
+                    additionalProperties = {
+                        type = "string"
+                    },
+                    description = "Request headers to set"
+                }
+            }
+        }
+    },
+    description = "APISIX-style proxy-rewrite"
+}
+
+local rewrite_rules_replace = {
+    type = "object",
+    additionalProperties = true,
+    properties = {
+        from = {
+            type = "string",
+            description = "Literal substring to replace in request URI"
+        },
+        to = {
+            type = "string",
+            description = "Replacement string (may be empty)"
+        }
+    },
+    required = { "from" },
+    description = "Literal replace on URI path before proxy-rewrite"
+}
+
+local rewrite_rules_redirect = {
+    type = "object",
+    additionalProperties = true,
+    properties = {
+        http_to_https = {
+            type = "boolean",
+            description = "Redirect HTTP to HTTPS"
+        },
+        uri = {
+            type = "string",
+            description = "Redirect Location URI"
+        },
+        ret_code = {
+            type = "integer",
+            minimum = 300,
+            maximum = 399,
+            description = "HTTP redirect status"
+        }
+    },
+    description = "APISIX-style redirect"
+}
+
+local rewrite_rules = {
+    type = "object",
+    additionalProperties = true,
+    properties = {
+        ["proxy-rewrite"] = rewrite_rules_proxy_rewrite,
+        replace = rewrite_rules_replace,
+        redirect = rewrite_rules_redirect
+    },
+    description = "Route rewrite rules JSON: replace, proxy-rewrite, redirect"
+}
+
 _M.created = {
     type       = "object",
     properties = {
@@ -117,7 +214,8 @@ _M.created = {
         chunked_transfer_encoding = chunked_transfer_encoding,
         proxy_buffering = proxy_buffering,
         proxy_cache = proxy_cache_config,
-        proxy_set_header = proxy_set_header_config
+        proxy_set_header = proxy_set_header_config,
+        rewrite_rules = rewrite_rules
     },
     required   = { "name", "paths", "service" }
 }
@@ -137,7 +235,8 @@ _M.updated = {
         chunked_transfer_encoding = chunked_transfer_encoding,
         proxy_buffering = proxy_buffering,
         proxy_cache = proxy_cache_config,
-        proxy_set_header = proxy_set_header_config
+        proxy_set_header = proxy_set_header_config,
+        rewrite_rules = rewrite_rules
     },
     required   = { "router_key" }
 }
@@ -175,7 +274,8 @@ _M.router_data = {
         chunked_transfer_encoding = chunked_transfer_encoding,
         proxy_buffering = proxy_buffering,
         proxy_cache = proxy_cache_config,
-        proxy_set_header = proxy_set_header_config
+        proxy_set_header = proxy_set_header_config,
+        rewrite_rules = rewrite_rules
     },
     required   = { "name", "methods", "paths", "headers", "service", "upstream", "enabled" }
 }

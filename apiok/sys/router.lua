@@ -8,6 +8,7 @@ local okrouting = require("apiok.sys.routing")
 local sys_certificate = require("apiok.sys.certificate")
 local sys_balancer = require("apiok.sys.balancer")
 local sys_plugin = require("apiok.sys.plugin")
+local rewrite_rules_sys = require("apiok.sys.rewrite_rules")
 local ngx_process = require("ngx.process")
 local ngx_sleep = ngx.sleep
 local ngx_timer_at = ngx.timer.at
@@ -95,6 +96,9 @@ local function build_service_router_list()
 	if router_list and router_list.list and (#router_list.list > 0) then
 		for i = 1, #router_list.list do
 			repeat
+				router_list.list[i].rewrite_rules =
+					rewrite_rules_sys.decode_rewrite_rules(router_list.list[i].rewrite_rules)
+
 				local _, err = pdk.schema.check(schema.router.router_data, router_list.list[i])
 
 				if err then
@@ -132,6 +136,7 @@ local function build_service_router_list()
 					proxy_buffering = router_list.list[i].proxy_buffering,
 					proxy_cache = router_list.list[i].proxy_cache,
 					proxy_set_header = router_list.list[i].proxy_set_header,
+					rewrite_rules = router_list.list[i].rewrite_rules,
 				})
 			until true
 		end
@@ -436,6 +441,7 @@ local function generate_router_data(router_data)
 								proxy_buffering = router_data.routers[j].proxy_buffering,
 								proxy_cache = router_data.routers[j].proxy_cache,
 								proxy_set_header = router_data.routers[j].proxy_set_header,
+								rewrite_rules = router_data.routers[j].rewrite_rules,
 							},
 						}
 
