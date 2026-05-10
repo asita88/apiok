@@ -80,7 +80,7 @@ function _M.http_access(ok_ctx, plugin_config)
             local replacement = rewrite_value.replacement
             local flags = rewrite_value.flags or "jo"
 
-            local new_uri_m, err = ngx.re.gsub(original_uri, pattern, replacement, flags)
+            local new_uri_m, _, err = ngx.re.gsub(original_uri, pattern, replacement, flags)
             if err then
                 pdk.log.error("[request-rewrite] regex replace error: " .. tostring(err))
                 return

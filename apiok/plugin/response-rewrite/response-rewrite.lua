@@ -108,7 +108,7 @@ function _M.http_body_filter(ok_ctx, plugin_config)
         local replacement = rewrite_value.replacement
         local flags = rewrite_value.flags or "jo"
 
-        local new_body_m, err = ngx.re.gsub(full_body, pattern, replacement, flags)
+        local new_body_m, _, err = ngx.re.gsub(full_body, pattern, replacement, flags)
         if err then
             pdk.log.error("[response-rewrite] regex replace error: " .. tostring(err))
             ngx.arg[1] = full_body

@@ -85,7 +85,7 @@ local function apply_proxy_rewrite(rr, ok_ctx)
 	end
 
 	if pr.regex_uri and type(pr.regex_uri) == "table" and pr.regex_uri[1] and pr.regex_uri[2] then
-		local new_uri, err = ngx.re.gsub(ngx.var.uri, pr.regex_uri[1], pr.regex_uri[2], "jo")
+		local new_uri, _, err = ngx.re.gsub(ngx.var.uri, pr.regex_uri[1], pr.regex_uri[2], "jo")
 		if err then
 			pdk.log.error("[rewrite_rules] proxy-rewrite regex_uri: " .. tostring(err))
 		else
