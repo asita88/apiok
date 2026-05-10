@@ -5,7 +5,7 @@ local sys    = require("apiok.sys")
 local sys_rewrite_rules = require("apiok.sys.rewrite_rules")
 
 local function run_plugin(phase, ok_ctx)
-    pdk.log.error("run_plugin: ", phase)
+
     if ok_ctx == nil or ok_ctx.config == nil then
         return
     end
@@ -38,10 +38,6 @@ local function run_plugin(phase, ok_ctx)
 
     if #router_plugins > 0 then
 
-        pdk.log.error("router_plugins: ", #router_plugins)
-
-        pdk.log.error("plugin_objects: ", #plugin_objects)
-
         for i = 1, #router_plugins do
 
             repeat
@@ -69,10 +65,6 @@ local function run_plugin(phase, ok_ctx)
     end
 
     if #service_plugins > 0 then
-
-        pdk.log.error("service_plugins: ", #service_plugins)
-
-        pdk.log.error("plugin_objects: ", #plugin_objects)
 
         for j = 1, #service_plugins do
 
