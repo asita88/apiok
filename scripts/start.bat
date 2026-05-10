@@ -144,7 +144,7 @@ docker run -d ^
     -p 80:80 ^
     -p 443:443 ^
     -p 8080:8080 ^
-    -v "%cd%\logs:/opt/apiok/apiok/logs" ^
+    -v "%cd%\logs:/var/log/apiok" ^
     --restart unless-stopped ^
     %IMAGE_NAME%:latest
 
