@@ -18,11 +18,11 @@ consul:
 
 # MySQL 配置（当 storage.engine = mysql 时使用）
 mysql:
-  host: 127.0.0.1
+  host: 10.172.22.238
   port: 3306
   database: apiok
-  user: apiok
-  password: "YdGxr7y5nfwM7HPR"
+  user: root
+  password: "123456"
   pool_size: 100
   backlog: 100
   timeout: 1000

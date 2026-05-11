@@ -33,6 +33,12 @@ local enabled = {
     type = "boolean",
 }
 
+local priority = {
+    type = "integer",
+    minimum = 0,
+    description = "Route match priority; larger value wins when multiple routes match (aligned with APISIX)."
+}
+
 local client_max_body_size = {
     type = "number",
     minimum = 0,
@@ -94,18 +100,34 @@ local rewrite_rules_proxy_rewrite = {
     type = "object",
     additionalProperties = true,
     properties = {
-        uri = {
+        path_mode = {
             type = "string",
-            description = "Static target URI path"
+            enum = { "keep", "static", "regex" },
+            description = "keep: no uri rewrite; static: uri_pairs exact uri match; regex: regex_uris"
         },
-        regex_uri = {
+        regex_uris = {
             type = "array",
-            minItems = 2,
-            maxItems = 2,
             items = {
-                type = "string"
+                type = "array",
+                minItems = 2,
+                maxItems = 2,
+                items = {
+                    type = "string"
+                }
             },
-            description = "[pattern, replacement] Nginx-compatible regex rewrite"
+            description = "[pattern, replacement] pairs, applied in order"
+        },
+        uri_pairs = {
+            type = "array",
+            items = {
+                type = "array",
+                minItems = 2,
+                maxItems = 2,
+                items = {
+                    type = "string"
+                }
+            },
+            description = "[request_uri, target_uri] exact match on current URI; first hit wins"
         },
         host = {
             type = "string",
@@ -215,7 +237,8 @@ _M.created = {
         proxy_buffering = proxy_buffering,
         proxy_cache = proxy_cache_config,
         proxy_set_header = proxy_set_header_config,
-        rewrite_rules = rewrite_rules
+        rewrite_rules = rewrite_rules,
+        priority = priority
     },
     required   = { "name", "paths", "service" }
 }
@@ -236,7 +259,8 @@ _M.updated = {
         proxy_buffering = proxy_buffering,
         proxy_cache = proxy_cache_config,
         proxy_set_header = proxy_set_header_config,
-        rewrite_rules = rewrite_rules
+        rewrite_rules = rewrite_rules,
+        priority = priority
     },
     required   = { "router_key" }
 }
@@ -275,7 +299,8 @@ _M.router_data = {
         proxy_buffering = proxy_buffering,
         proxy_cache = proxy_cache_config,
         proxy_set_header = proxy_set_header_config,
-        rewrite_rules = rewrite_rules
+        rewrite_rules = rewrite_rules,
+        priority = priority
     },
     required   = { "name", "methods", "paths", "headers", "service", "upstream", "enabled" }
 }

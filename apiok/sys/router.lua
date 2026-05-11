@@ -131,6 +131,7 @@ local function build_service_router_list()
 					headers = router_list.list[i].headers,
 					upstream = router_list.list[i].upstream,
 					plugins = router_list.list[i].plugins,
+					priority = router_list.list[i].priority,
 					client_max_body_size = router_list.list[i].client_max_body_size,
 					chunked_transfer_encoding = router_list.list[i].chunked_transfer_encoding,
 					proxy_buffering = router_list.list[i].proxy_buffering,
@@ -421,6 +422,17 @@ local function generate_router_data(router_data)
 							upstream_copy = pdk.json.decode(pdk.json.encode(router_data.routers[j].upstream, true))
 						end
 
+						local pr_cfg = router_data.routers[j].priority
+						local priority_num
+						if type(pr_cfg) == "number" then
+							priority_num = pr_cfg
+						elseif type(pr_cfg) == "string" then
+							priority_num = tonumber(pr_cfg)
+						end
+						if priority_num == nil then
+							priority_num = (router_data.routers[j].paths[k] == "/*") and 0 or 1
+						end
+
 						local host_router_data = {
 							plugins = router_data.plugins,
 							protocols = router_data.protocols,
@@ -432,6 +444,7 @@ local function generate_router_data(router_data)
 							proxy_set_header = router_data.proxy_set_header,
 							router = {
 								path = router_data.routers[j].paths[k],
+								priority = priority_num,
 								plugins = router_data.routers[j].plugins,
 								upstream = upstream_copy,
 								headers = router_data.routers[j].headers,
@@ -444,11 +457,6 @@ local function generate_router_data(router_data)
 								rewrite_rules = router_data.routers[j].rewrite_rules,
 							},
 						}
-
-						local priority_num = 1
-						if host_router_data.router.path == "/*" then
-							priority_num = 0
-						end
 
 						table.insert(router_data_list, {
 							path = host_router_data.host .. ":" .. host_router_data.router.path,
@@ -634,6 +642,7 @@ function _M.router_match(ok_ctx)
 
 	local match, err = router_objects:dispatch(match_path, string.upper(ok_ctx.matched.method), ok_ctx)
 
+
 	if err then
 		pdk.log.error("router_objects dispatch err: [" .. tostring(err) .. "]")
 		return false
@@ -643,10 +652,16 @@ function _M.router_match(ok_ctx)
 		return false
 	end
 
+
+
 	local service_router = ok_ctx.config.service_router
 	local matched = ok_ctx.matched
 
 	local match_protocols = false
+
+	-- router_match service_router
+	pdk.log.error("router_match service_router: [" .. pdk.json.encode(service_router, true) .. "]")
+
 
 	if service_router.protocols and matched.scheme then
 		for i = 1, #service_router.protocols do

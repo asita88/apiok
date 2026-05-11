@@ -84,15 +84,43 @@ local function apply_proxy_rewrite(rr, ok_ctx)
 		return
 	end
 
-	if pr.regex_uri and type(pr.regex_uri) == "table" and pr.regex_uri[1] and pr.regex_uri[2] then
-		local new_uri, _, err = ngx.re.gsub(ngx.var.uri, pr.regex_uri[1], pr.regex_uri[2], "jo")
+	local function apply_regex_pair(pat, repl)
+		if type(pat) ~= "string" or pat == "" or type(repl) ~= "string" then
+			return
+		end
+		local new_uri, _, err = ngx.re.gsub(ngx.var.uri, pat, repl, "jo")
 		if err then
-			pdk.log.error("[rewrite_rules] proxy-rewrite regex_uri: " .. tostring(err))
+			pdk.log.error("[rewrite_rules] proxy-rewrite regex_uris: " .. tostring(err))
 		else
 			ngx.req.set_uri(new_uri, false)
 		end
-	elseif pr.uri and pr.uri ~= "" then
-		ngx.req.set_uri(pr.uri, false)
+	end
+
+	local pm = pr.path_mode
+	if pm == "regex" then
+		if pr.regex_uris and type(pr.regex_uris) == "table" then
+			for i = 1, #pr.regex_uris do
+				local pair = pr.regex_uris[i]
+				if type(pair) == "table" and pair[1] and pair[2] then
+					apply_regex_pair(pair[1], pair[2])
+				end
+			end
+		end
+	elseif pm == "static" then
+		local cur = ngx.var.uri
+		if pr.uri_pairs and type(pr.uri_pairs) == "table" then
+			for i = 1, #pr.uri_pairs do
+				local pair = pr.uri_pairs[i]
+				if type(pair) == "table" and pair[1] and pair[2] then
+					local from_uri = tostring(pair[1])
+					local to_uri = tostring(pair[2])
+					if from_uri ~= "" and cur == from_uri then
+						ngx.req.set_uri(to_uri, false)
+						break
+					end
+				end
+			end
+		end
 	end
 
 	if pr.host and pr.host ~= "" then

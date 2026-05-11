@@ -39,17 +39,16 @@ local mt = { __index = _M }
 -- @param path 路由路径，格式为 "host:path" 或纯路径，支持通配符 * 和变量 {name}
 -- @param method HTTP 方法，可以是字符串（如 "GET"）或表（如 {"GET", "POST"}），支持逗号分隔的字符串
 -- @param handler 路由处理函数
--- @param priority 路由优先级，数字越小优先级越高，默认为 1
+-- @param priority 路由优先级，数字越大越优先匹配（与 dispatch 中比较一致），缺省按 push_router 内默认
 local function push_router(self, path, method, handler, priority)
     -- 验证路径参数
     if type(path) ~= "string" then
         error("invalid argument path", 2)
     end
 
-    -- 设置优先级，默认为 1
     if priority and type(priority) ~= "number" then
         error("missing argument priority", 2)
-    else
+    elseif not priority then
         priority = 1
     end
 
